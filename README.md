@@ -15,3 +15,11 @@ the five stages being Instruction Fetch (IF), Instruction Decode(ID), Execute (E
 # References and Sources
 - [Berkeley Repo](https://github.com/ucb-bar/riscv-sodor/tree/master/src/main/scala/sodor/rv32_5stage)
 - [C++ to RISC-V examples](https://marz.utk.edu/my-courses/cosc230/book/example-risc-v-assembly-programs/)
+- Computer Organization and Design by David A. Patterson and John L. Hennessy
+    - Chapter 2: Instructions: Language of the Computer
+        - [RISC-V Instruction Format](assets/InstructionsFormat.png)
+
+    - Chapter 4: The Processor
+        - [Op-codes for R-type instructions (for ALU)](assets/operationsAndFields.png)
+        - [Final DataPath and Control](assets/fina_datapath.png)
+        - [Control Signals](assets/ControlSignals.png)

@@ -2,7 +2,7 @@
 #define PIPELINESTAGES_HPP
 
 #include <stdint.h>
-#include "InstructionFile.h"
+#include "InstructionFile.hpp"
 
 struct IFStageData {
     uint32_t pc;
@@ -20,6 +20,34 @@ struct IDStageData {
     uint32_t branch_target;
     bool valid;
     //Write_data in write back stage
+};
+
+struct EXStageData {
+    Instruction instruction; //Different instruction in each stage
+    uint32_t pc;
+    uint32_t zero;
+    uint32_t alu_output;
+    uint32_t input1;
+    uint32_t input2;
+    bool valid;
+};
+
+struct MEMStageData {
+    Instruction instruction; //Different instruction in each stage
+    uint32_t pc;
+    uint32_t address;
+    uint32_t write_data;
+    uint32_t read_data;
+    bool valid;
+};
+
+struct WBStageData {
+    Instruction instruction; //Different instruction in each stage
+    uint32_t pc;
+    uint32_t write_data;
+    uint8_t write_register;
+    bool reg_write;
+    bool valid;
 };
 
 
