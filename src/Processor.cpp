@@ -16,6 +16,19 @@ void Processor::fetch() {
     }
     else{
         if_latch.is_stall = false;
+        if(cycles == 0){
+            if_latch.pc = 0;
+        }
+        else{
+            if_latch.pc = pc;
+            // read instructions from IM
+            Instruction new_instr;
+            new_instr.raw = getInstruction(pc);
+            id_latch.instruction = new_instr;
+            id_latch.pc = if_latch.pc;
+            pc += 4; // increment the global pc for next instruction // debug
+            // jal -> update global pc in that case
+        }
     }
     //pc
     //read instruction from instruction memory
@@ -62,12 +75,24 @@ void Processor::decode() {
 }
 
 void Processor::execute() {
-    if(ex_latch.is_stall){
+    if(ex_latch.num_stall > 0){
         ex_latch.num_stall--;
         return;
     }
     else{
-
+        // add more alus // debug
+        // alu output in the case of jal / jalr
+        // negative imm // debug
+        ex_latch.is_stall = false;
+        if(ex_latch.instruction.controls.is_jump){
+            pc += imm;
+            ex_latch.is_jump = true;
+        }
+        ex_latch.alu_output = 0;
+        // debug
+        mem_latch.instruction = ex_latch.instruction;
+        mem_latch.pc = ex_latch.pc;
+        mem_latch.alu_output = ex_latch.alu_output;
     }
     //read data from id_latch
     //execute instruction
