@@ -3,7 +3,7 @@
 
 //decode function
 
-void decode(Instruction& instr){
+void decodeInstruction(Instruction& instr){
     // first 7 bits : opcode 
     instr.opcode = instr.raw & 0x7F;
     instr.rd = (instr.raw >> 7) & 0x1F;
@@ -18,6 +18,7 @@ void decode(Instruction& instr){
     instr.controls.MemWrite = false;   // sw
     instr.controls.AluSrc = false;
     instr.controls.RegWrite = false;
+    instr.controls.is_jump = false;
 
     // construct the value of imm according to the type of instruction
     if(instr.opcode == 0x33){
@@ -48,6 +49,7 @@ void decode(Instruction& instr){
         instr.imm = (int32_t)((instr.raw) >> 20);
         instr.controls.AluSrc = true;
         instr.controls.RegWrite = true; // rd != x0
+        instr.controls.is_jump = true;
     }
     else if(instr.opcode == 0x73){
         // ecall break
@@ -85,6 +87,7 @@ void decode(Instruction& instr){
         instr.imm = (int32_t)((imm20 << 20) | (imm19_12 << 12) | (imm11 << 11) | (imm10_1 << 1));
         instr.controls.AluSrc = true; // pc+offset
         instr.controls.RegWrite = true;
+        instr.controls.is_jump = true;
     }
     else if(instr.opcode == 0x17){
         // auipc 

@@ -23,6 +23,7 @@ struct control_signals{
     bool MemWrite;
     bool AluSrc;
     bool RegWrite;
+    bool is_jump; // zero // debug
 };
 
 struct Instruction {
@@ -39,6 +40,6 @@ struct Instruction {
     control_signals controls;
 };
 
-//decode function
+void decodeInstruction(Instruction& instr);
 
 #endif // INSTRUCTION_H

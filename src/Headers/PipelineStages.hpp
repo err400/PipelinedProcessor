@@ -30,8 +30,8 @@ struct EXStageData {
     Instruction instruction; //Different instruction in each stage
     uint32_t pc;
     uint32_t zero;
-    uint32_t alu_output;
-    uint32_t rs2_value; //Value to write in memory if applicable
+    uint32_t alu_output; // debug
+    uint32_t rs2_value; // Value to write in memory if applicable
     bool is_jump;
     int num_stall;
     bool is_stall;
