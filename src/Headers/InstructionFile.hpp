@@ -15,6 +15,16 @@ enum class Instruction_type{
     U_TYPE
 };
 
+struct control_signals{
+    bool is_branch;
+    bool MemRead;
+    bool MemtoReg;
+    // int32_t AluOp;  // debug
+    bool MemWrite;
+    bool AluSrc;
+    bool RegWrite;
+};
+
 struct Instruction {
     uint32_t raw;
     uint8_t func7;
@@ -26,6 +36,7 @@ struct Instruction {
     // no two imm in case of stores
     uint32_t imm;
     Instruction_type type;
+    control_signals controls;
 };
 
 //decode function
