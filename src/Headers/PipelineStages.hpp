@@ -41,6 +41,7 @@ struct MEMStageData {
     Instruction instruction; //Different instruction in each stage
     uint32_t pc;
     uint32_t mem_read_data;
+    uint32_t alu_output;
     int num_stall;
     bool is_stall;
 };

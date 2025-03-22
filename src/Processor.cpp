@@ -44,33 +44,33 @@ void Processor::decode() {
         id_latch.num_stall--;
         return;
     }
-    else{
-        //read data from if_latch
-        //decode instruction
-        //check for data hazards
-        if(checkDataHazard(if_latch.instruction, ex_latch.instruction)){
-            if_latch.is_stall = true; //debug
-            if_latch.num_stall = 2;
-            id_latch.is_stall = true;
-            id_latch.num_stall = 2;
-            ex_latch.is_stall = true;
-            ex_latch.num_stall = 2;
-            mem_latch.is_stall = true;
-            mem_latch.num_stall = 2;
-            wb_latch.is_stall = true;
-            wb_latch.num_stall = 2;
+    id_latch.is_stall = false;
+    //read data from if_latch
+    //decode instruction
+    decodeInstruction(if_latch.instruction);
+    //check for data hazards
+    if(checkDataHazard(if_latch.instruction, ex_latch.instruction)){
+        if_latch.is_stall = id_latch.is_stall = ex_latch.is_stall = mem_latch.is_stall = wb_latch.is_stall = true;
+        if_latch.num_stall = id_latch.num_stall = ex_latch.num_stall = mem_latch.num_stall = wb_latch.num_stall = 2;
+        return;
 
-        }
-        else if(checkDataHazard(if_latch.instruction, mem_latch.instruction)){
-            if_latch.is_stall = id_latch.is_stall = ex_latch.is_stall = mem_latch.is_stall = wb_latch.is_stall = true;
-            if_latch.num_stall = id_latch.num_stall = ex_latch.num_stall = mem_latch.num_stall = wb_latch.num_stall = 1;
-        }
-        
+    }
+    if(checkDataHazard(if_latch.instruction, mem_latch.instruction)){
+        if_latch.is_stall = id_latch.is_stall = ex_latch.is_stall = mem_latch.is_stall = wb_latch.is_stall = true;
+        if_latch.num_stall = id_latch.num_stall = ex_latch.num_stall = mem_latch.num_stall = wb_latch.num_stall = 1;
+        return;
     }
     //resolve branch
-
+    if(if_latch.instruction.controls.is_branch){
+        if(resolveBranch(if_latch.instruction)){
+            if_latch.is_stall = id_latch.is_stall = ex_latch.is_stall = mem_latch.is_stall = wb_latch.is_stall = true;
+            if_latch.num_stall = id_latch.num_stall = ex_latch.num_stall = mem_latch.num_stall = wb_latch.num_stall = 2;
+            return;
+        }
+    }
     //store data in id_latch
-    //3 cases checkhazard(if_latch ins, ex_latch ins) // // update stalls
+    ex_latch.pc=id_latch.pc;
+    ex_latch.instruction=id_latch.instruction;
     //update vector of strings with ID
 }
 
@@ -101,18 +101,23 @@ void Processor::execute() {
     //update vector of strings with EX
 }
 
-void Processor::mem() {
+void Processor::mem() { //debug
     if(mem_latch.is_stall){
         mem_latch.num_stall--;
         return;
     }
-    else{
-
-    }
+    mem_latch.is_stall = false;
     //read data from ex_latch
     //read or write based on control signal from Memory
+    if(mem_latch.instruction.controls.MemRead){
+        mem_latch.mem_read_data=memory.readMemory(ex_latch.alu_output);
+    }
+    else if(mem_latch.instruction.controls.MemWrite){
+        memory.writeMemory(ex_latch.alu_output, ex_latch.rs2_value);
+    }
     //store data in mem_latch
-
+    wb_latch.pc=mem_latch.pc;
+    wb_latch.instruction=mem_latch.instruction;
     //update vector of strings with MEM
 }
 
@@ -121,12 +126,22 @@ void Processor::writeback() {
         wb_latch.num_stall--;
         return;
     }
-    else{
-
-    }
+    wb_latch.is_stall = false;
     //read data from mem_latch
 
     //write data to register file
+    if(wb_latch.instruction.controls.RegWrite){
+        if(wb_latch.instruction.controls.MemtoReg){
+            registers.writeRegister(mem_latch.instruction.rd, mem_latch.mem_read_data);
+        }
+        else if(wb_latch.instruction.controls.is_jump){
+            registers.writeRegister(mem_latch.instruction.rd, mem_latch.pc+4); //jal jalr
+        }
+        else{
+            registers.writeRegister(mem_latch.instruction.rd, mem_latch.alu_output);
+        }
+    }
+
     //store data in wb_latch
 
     //update vector of strings with WB

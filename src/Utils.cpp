@@ -36,6 +36,17 @@ void outputStageandCycles() {
 }
 
 bool checkDataHazard(Instruction instruction1, Instruction instruction2) {
+    int opcode1 = instruction1.opcode;
+    int opcode2 = instruction2.opcode;
+    // Check if instruction1 is a JAL,LUI or AUIPC
+    if (opcode1 == 0b1101111 || opcode1 ==0b0110111 || opcode1==0b0010111)
+        return false;
+    int rs1 = instruction1.rs1;
+    int rs2 = instruction1.rs2;
+    int rd = instruction2.rd;
+    
+    if (rs1 == rd || rs2 == rd)
+        return true;
     
     return false;
 }
