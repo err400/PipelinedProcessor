@@ -3,7 +3,7 @@
 
 //decode function
 
-void decode(Instruction& instr){
+void decodeInstruction(Instruction& instr){
     // first 7 bits : opcode 
     instr.opcode = instr.raw & 0x7F;
     instr.rd = (instr.raw >> 7) & 0x1F;

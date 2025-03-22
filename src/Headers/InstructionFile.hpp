@@ -39,6 +39,6 @@ struct Instruction {
     control_signals controls;
 };
 
-//decode function
+void decodeInstruction(Instruction& instr);
 
 #endif // INSTRUCTION_H
