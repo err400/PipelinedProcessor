@@ -7,6 +7,7 @@
 std::vector<uint32_t> instructionMemory; // Empty initially
 
 struct Instruction {
+    uint32_t raw;
     uint8_t func7;
     uint8_t rs2;
     uint8_t rs1;
@@ -24,7 +25,6 @@ struct Instruction {
     }
 };
 
-void readMachineCode(const char* fileName);
-uint32_t getInstruction(int address);
+//decode function
 
 #endif // INSTRUCTION_H
