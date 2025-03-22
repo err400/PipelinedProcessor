@@ -8,5 +8,8 @@ void Basic_Processor::run() {
     while (true) {
         cycle();
         cycles++;
+        if(cycles>30){
+            break;  //debug
+        }
     }
 }
