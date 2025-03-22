@@ -1,4 +1,4 @@
-#include "Headers/Utils.hpp"
+#include "Headers/utils.hpp"
 #include <iostream>
 #include <vector>
 #include "Headers/InstructionFile.hpp"
@@ -33,4 +33,9 @@ void outputStageandCycles() {
 
 //go through each instruction, access it's vector of strings and print the string as mentioned above
 
+}
+
+bool checkDataHazard(Instruction instruction1, Instruction instruction2) {
+    
+    return false;
 }
