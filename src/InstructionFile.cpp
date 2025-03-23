@@ -107,9 +107,9 @@ void decodeInstruction(Instruction& instr){
             instr.controls.AluOp = ALUOp::XOR; // xori
         } 
         else if(instr.func3 == 0x5) {
-            if((instr.raw >> 25) & 0x7F == 0x00) {
+            if(((instr.raw >> 25) & 0x7F) == 0x00) {
                 instr.controls.AluOp = ALUOp::SRL; // srli
-            } else if((instr.raw >> 25) & 0x7F == 0x20) {
+            } else if(((instr.raw >> 25) & 0x7F) == 0x20) {
                 instr.controls.AluOp = ALUOp::SRA; // srai
             }
         } 

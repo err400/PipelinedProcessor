@@ -60,7 +60,7 @@ void outputStageandCycles(const string& filename) {
 
 bool checkDataHazard(Instruction instruction1, Instruction instruction2) {
     int opcode1 = instruction1.opcode;
-    int opcode2 = instruction2.opcode;
+    // int opcode2 = instruction2.opcode;  // debug
     // Check if instruction1 is a JAL,LUI or AUIPC
     if (opcode1 == 0b1101111 || opcode1 ==0b0110111 || opcode1==0b0010111)
         return false;

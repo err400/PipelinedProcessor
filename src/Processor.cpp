@@ -52,13 +52,18 @@ void Processor::fetch() {
         else{
             if_latch.pc = pc;
             // read instructions from IM
-            Instruction new_instr;
-            new_instr = getInstruction(pc);
-            id_latch.instruction = new_instr;
-            id_latch.pc = if_latch.pc;
-            pc += 4; // increment the global pc for next instruction // debug
             // jal -> update global pc in that case
         }
+        Instruction new_instr;
+        // printf("if_latch.pc : %d\n", if_latch.pc); // debug
+        new_instr = getInstruction(if_latch.pc);
+        // printf("new_instr : %s\n", new_instr.instStr.c_str()); // debug
+        if_latch.valid = true;
+        if_latch.instruction = new_instr;
+        id_latch.instruction = new_instr;
+        id_latch.pc = if_latch.pc;
+        id_latch.valid = true;
+        pc += 4; // increment the global pc for next instruction // debug
     }
     //pc
     //read instruction from instruction memory
@@ -70,8 +75,12 @@ void Processor::fetch() {
 }
 
 void Processor::decode() {
+    // printf("decode in processor\n"); // debug
     if(id_latch.num_stall > 0){
         id_latch.num_stall--;
+        return;
+    }
+    if(!id_latch.valid){
         return;
     }
     id_latch.is_stall = false;
@@ -99,6 +108,7 @@ void Processor::decode() {
         }
     }
     //store data in id_latch
+    ex_latch.valid = true;
     ex_latch.pc=id_latch.pc;
     ex_latch.instruction=id_latch.instruction;
     ex_latch.rs2_value = id_latch.instruction.rs2;
@@ -106,11 +116,15 @@ void Processor::decode() {
 }
 
 void Processor::execute() {
+    // printf("execute in processor\n"); // debug
     if(ex_latch.num_stall > 0){
         ex_latch.num_stall--;
         return;
     }
     else{
+        if(!ex_latch.valid){
+            return;
+        }
         // alu output in the case of jal / jalr
         // negative imm // debug
         ex_latch.is_stall = false;
@@ -196,6 +210,7 @@ void Processor::execute() {
         // branches resolved in ID stage
         // debug
         // set alu_output to register read data in case of sw instruction
+        mem_latch.valid = true;
         mem_latch.instruction = ex_latch.instruction;
         mem_latch.pc = ex_latch.pc;
         mem_latch.alu_output = ex_latch.alu_output;
@@ -208,20 +223,29 @@ void Processor::execute() {
 }
 
 void Processor::mem() { //debug
+    // printf("mem in processor\n"); // debug
     if(mem_latch.is_stall){
         mem_latch.num_stall--;
+        return;
+    }
+    if(!mem_latch.valid){
         return;
     }
     mem_latch.is_stall = false;
     //read data from ex_latch
     //read or write based on control signal from Memory
+    // printf("mem_latch.instruction: %s\n", mem_latch.instruction.instStr.c_str()); // debug
     if(mem_latch.instruction.controls.MemRead){
+        // printf("debug1 : memread in processor\n"); // debug
         mem_latch.mem_read_data=memory.readMemory(ex_latch.alu_output);
+       
     }
     else if(mem_latch.instruction.controls.MemWrite){
+        // printf("debug1 : memwrite in processor\n"); // debug
         memory.writeMemory(ex_latch.alu_output, ex_latch.rs2_value);
     }
     //store data in mem_latch
+    wb_latch.valid = true;
     wb_latch.pc=mem_latch.pc;
     wb_latch.instruction=mem_latch.instruction;
     wb_latch.write_data = mem_latch.alu_output; // debug
@@ -229,8 +253,12 @@ void Processor::mem() { //debug
 }
 
 void Processor::writeback() {
+    // printf("writeback in processor\n"); // debug
     if(wb_latch.is_stall){
         wb_latch.num_stall--;
+        return;
+    }
+    if(!wb_latch.valid){
         return;
     }
     wb_latch.is_stall = false;
@@ -238,6 +266,7 @@ void Processor::writeback() {
 
     //write data to register file
     if(wb_latch.instruction.controls.RegWrite){
+        // printf("debug1 : regwrite in processor\n"); // debug
         if(wb_latch.instruction.controls.MemtoReg){
             registers.writeRegister(mem_latch.instruction.rd, mem_latch.mem_read_data);
         }
@@ -257,6 +286,8 @@ void Processor::writeback() {
 Processor::Processor() {
     cycles = 0;
     pc = 0;
-    if_latch.is_stall = id_latch.is_stall = ex_latch.is_stall = mem_latch.is_stall = wb_latch.is_stall = false;
+    if_latch.valid = id_latch.valid = ex_latch.valid = mem_latch.valid = wb_latch.valid = false;
+    if_latch.is_stall = false;
+    id_latch.is_stall = ex_latch.is_stall = mem_latch.is_stall = wb_latch.is_stall = false;
     if_latch.num_stall = id_latch.num_stall = ex_latch.num_stall = mem_latch.num_stall = wb_latch.num_stall = 0;
 }

@@ -9,6 +9,7 @@ struct IFStageData {
     Instruction instruction;
     int num_stall;
     bool is_stall; //The is_stall flag indicates whether the data in the pipeline register is meaningful or if it's a "bubble"
+    bool valid; // instruction inside the stage is not null
 };
 
 struct IDStageData {
@@ -23,6 +24,7 @@ struct IDStageData {
     uint32_t branch_target;
     int num_stall;
     bool is_stall;
+    bool valid;
     //Write_data in write back stage
 };
 
@@ -35,6 +37,7 @@ struct EXStageData {
     bool is_jump;
     int num_stall;
     bool is_stall;
+    bool valid;
 };
 
 // sw x4 0(x1)
@@ -45,6 +48,7 @@ struct MEMStageData {
     int32_t alu_output; // can be the address where to write
     int num_stall;
     bool is_stall;
+    bool valid;
 };
 
 struct WBStageData {
@@ -54,6 +58,7 @@ struct WBStageData {
     uint8_t write_register;
     int num_stall;
     bool is_stall;
+    bool valid;
 };
 
 #endif // PIPELINESTAGES_HPP
