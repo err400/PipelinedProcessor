@@ -71,6 +71,7 @@ void Processor::decode() {
     //store data in id_latch
     ex_latch.pc=id_latch.pc;
     ex_latch.instruction=id_latch.instruction;
+    ex_latch.rs2_value
     //update vector of strings with ID
 }
 
@@ -80,16 +81,90 @@ void Processor::execute() {
         return;
     }
     else{
-        // add more alus // debug
         // alu output in the case of jal / jalr
         // negative imm // debug
         ex_latch.is_stall = false;
+        uint32_t op1 = registers.readRegister(ex_latch.instruction.rs1);
+        uint32_t op2;
+
+        if(ex_latch.instruction.controls.AluSrc){
+            op2 = ex_latch.instruction.imm;
+        }
+        else{
+            op2 = registers.readRegister(ex_latch.instruction.rs2);
+        }
+
+        
+
+        switch(ex_latch.instruction.controls.AluOp){
+            case ALUOp::ADD:
+                ex_latch.alu_output = op1 + op2;
+                break;
+            case ALUOp::SUB:
+                ex_latch.alu_output = op1 - op2;
+                break;
+            case ALUOp::SLL:
+                ex_latch.alu_output = op1 << op2;
+                break;
+            case ALUOp::SLT:
+                ex_latch.alu_output = ((int32_t)op1 < (int32_t)op2) ? 1 : 0;
+                break;
+            case ALUOp::SLTU:
+                ex_latch.alu_output = (op1 < op2) ? 1 : 0;
+                break;
+            case ALUOp::XOR:
+                ex_latch.alu_output = op1 ^ op2;
+                break;
+            case ALUOp::SRL:
+                ex_latch.alu_output = op1 >> op2;
+                break;
+            case ALUOp::SRA:
+                ex_latch.alu_output = (int32_t)op1 >> op2;
+                break;
+            case ALUOp::OR:
+                ex_latch.alu_output = op1 | op2;
+                break;
+            case ALUOp::AND:
+                ex_latch.alu_output = op1 & op2;
+                break;
+            case ALUOp::MUL:
+                ex_latch.alu_output = op1 * op2;
+                break;
+            case ALUOp::DIV:
+                // check for division by zero
+                if(op2 == 0){
+                    // std::cerr << "Error: Division by zero" << std::endl;
+                    ex_latch.alu_output = 0;
+                }
+                else{
+                    ex_latch.alu_output = op1 / op2;
+                }
+                break;
+            case ALUOp::REM:
+                if(op2 == 0){
+                    ex_latch.alu_output = 0;
+                }
+                else{
+                    ex_latch.alu_output = op1 % op2;
+                }
+                break;
+        }
+        
         if(ex_latch.instruction.controls.is_jump){
-            pc += imm;
+            if(ex_latch.instruction.opcode == 0x6F) { 
+                // jal
+                pc = ex_latch.pc + ex_latch.instruction.imm;
+            } 
+            else if(ex_latch.instruction.opcode == 0x67) { 
+                // jalr
+                pc = (op1 + ex_latch.instruction.imm) & ~1;
+            }
+            ex_latch.is_jump = true;
             ex_latch.is_jump = true;
         }
-        ex_latch.alu_output = 0;
+        // branches resolved in ID stage
         // debug
+        // set alu_output to register read data in case of sw instruction
         mem_latch.instruction = ex_latch.instruction;
         mem_latch.pc = ex_latch.pc;
         mem_latch.alu_output = ex_latch.alu_output;
@@ -118,6 +193,7 @@ void Processor::mem() { //debug
     //store data in mem_latch
     wb_latch.pc=mem_latch.pc;
     wb_latch.instruction=mem_latch.instruction;
+    wb_latch.write_data = mem_latch.alu_output; // debug
     //update vector of strings with MEM
 }
 
