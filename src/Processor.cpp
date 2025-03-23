@@ -71,7 +71,7 @@ void Processor::decode() {
     //store data in id_latch
     ex_latch.pc=id_latch.pc;
     ex_latch.instruction=id_latch.instruction;
-    ex_latch.rs2_value
+    ex_latch.rs2_value = id_latch.instruction.rs2;
     //update vector of strings with ID
 }
 
