@@ -30,7 +30,7 @@ struct EXStageData {
     Instruction instruction; //Different instruction in each stage
     uint32_t pc;
     uint32_t zero;
-    uint32_t alu_output; // debug
+    int32_t alu_output; // debug
     uint32_t rs2_value; // Value to write in memory if applicable
     bool is_jump;
     int num_stall;
@@ -42,7 +42,7 @@ struct MEMStageData {
     Instruction instruction; //Different instruction in each stage
     uint32_t pc;
     uint32_t mem_read_data;
-    uint32_t alu_output; // can be the address where to write
+    int32_t alu_output; // can be the address where to write
     int num_stall;
     bool is_stall;
 };

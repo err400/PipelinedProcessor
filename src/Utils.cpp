@@ -1,37 +1,60 @@
 #include "Headers/Utils.hpp"
 #include <iostream>
 #include <vector>
-#include "Headers/InstructionFile.hpp"
+#include <string>
+#include <fstream>
+using namespace std;
 
 void readMachineCode(const char* fileName) {
     FILE* file = fopen(fileName, "r");
     if (file == NULL) {
-        std::cerr << "Error: Unable to open file " << fileName << std::endl;
+        std::cerr << "Error: Unable to open file " << fileName << std::endl; //debug
         exit(1);
-    } //debug
-
-    uint32_t address, instruction;
-    
-    while (fscanf(file, "%x: %x", &address, &instruction) == 2) {
-        instructionMemory.push_back(instruction); // Store at correct index
     }
-
+    char line[100]; //debug
+    while (fgets(line, sizeof(line), file)) {
+        uint32_t address;
+        uint32_t instruction;
+        char instructionStr[128] = {0};
+        if (sscanf(line, "%x: %x %[^\n]", &address, &instruction, instructionStr) >= 2) {
+            Instruction instr;
+            instr.raw = instruction;
+            instr.instStr = std::string(instructionStr);
+            instructionMemory.push_back(instr);
+        }
+    }
+    
     fclose(file);
 }
 
-uint32_t getInstruction(int address) {
+Instruction getInstruction(int address) {
     return instructionMemory[address / 4];
 }
 
-void outputStageandCycles() {
-    //make a file in folder outputfiles named filename_noforward_out.txt
-//     Use ; as a delimiter between cycles within a line. Thus output corresponding to the first two rows of the
-//      nonforwarding processor will look as follows:
-//      addi x5 x0 0;IF;ID;EX;MEM;WB
-//      add x6 x5 x10; ;IF;ID;-;-;EX;MEM;WB
-
-
-//go through each instruction, access it's vector of strings and print the string as mentioned above
+void outputStageandCycles(const string& filename) {
+    // make a file in folder outputfiles named filename_noforward_out.txt
+    // Use ; as a delimiter between cycles within a line. Thus output corresponding to the first two rows of the
+    // nonforwarding processor will look as follows:
+    // addi x5 x0 0;IF;ID;EX;MEM;WB
+    // add x6 x5 x10; ;IF;ID;-;-;EX;MEM;WB
+    string file_dest = "outputfiles/" + filename + "_noforward_out.txt";
+    ofstream outputFile(file_dest);
+    if (!outputFile.is_open()) {
+        cerr << "Error: Unable to open file " << file_dest << endl;
+        exit(1);
+    }
+    int n = instructionMemory.size();
+    for(int i = 0;i<n;i++){
+        Instruction instr = instructionMemory[i];
+        outputFile<<instr.instStr<<";   ";
+        // print the instruction
+        for(auto it: instr.vec){
+            outputFile<<it<<";";
+        }
+        outputFile<<endl;
+    }
+    outputFile.close();
+    // go through each instruction, access it's vector of strings and print the string as mentioned above
 
 }
 

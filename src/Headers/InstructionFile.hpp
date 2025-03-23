@@ -3,8 +3,9 @@
 
 #include <stdint.h>
 #include <vector>
+#include <string>
+using namespace std;
 
-std::vector<uint32_t> instructionMemory; // Empty initially
 
 enum class Instruction_type{
     R_TYPE,
@@ -59,7 +60,11 @@ struct Instruction {
     uint32_t imm;
     Instruction_type type;
     control_signals controls;
+    vector<string> vec;
+    string instStr;
 };
+
+extern std::vector<Instruction> instructionMemory; // Empty initially
 
 void decodeInstruction(Instruction& instr);
 

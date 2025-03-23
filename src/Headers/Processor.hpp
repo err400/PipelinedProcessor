@@ -2,7 +2,6 @@
 #define PROCESSOR_HPP
 
 #include "Basic_Processor.hpp"
-#include "InstructionFile.hpp"
 
 class Processor : public Basic_Processor {
     private:
@@ -16,6 +15,7 @@ class Processor : public Basic_Processor {
 
     public:
     Processor();
+    bool resolveBranch(Instruction instr);
 };
 
 
