@@ -37,11 +37,12 @@ struct EXStageData {
     bool is_stall;
 };
 
+// sw x4 0(x1)
 struct MEMStageData {
     Instruction instruction; //Different instruction in each stage
     uint32_t pc;
     uint32_t mem_read_data;
-    uint32_t alu_output;
+    uint32_t alu_output; // can be the address where to write
     int num_stall;
     bool is_stall;
 };

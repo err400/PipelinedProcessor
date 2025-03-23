@@ -19,6 +19,7 @@ void decodeInstruction(Instruction& instr){
     instr.controls.AluSrc = false;
     instr.controls.RegWrite = false;
     instr.controls.is_jump = false;
+    instr.controls.AluOp = ALUOp::ADD; // default aluop for most operations
 
     // construct the value of imm according to the type of instruction
     if(instr.opcode == 0x33){
@@ -26,6 +27,54 @@ void decodeInstruction(Instruction& instr){
         instr.type = Instruction_type::R_TYPE;
         instr.imm = 0;
         instr.controls.RegWrite = true;
+        // crosscheck from book once // debug
+        if(instr.func3 == 0x0) {
+            if(instr.func7 == 0x00) {
+                instr.controls.AluOp = ALUOp::ADD;
+            } 
+            else if(instr.func7 == 0x20) {
+                instr.controls.AluOp = ALUOp::SUB;
+            } 
+            else if(instr.func7 == 0x01) {
+                instr.controls.AluOp = ALUOp::MUL;
+            }
+        } 
+        else if(instr.func3 == 0x1) {
+            instr.controls.AluOp = ALUOp::SLL;
+        } 
+        else if(instr.func3 == 0x2) {
+            instr.controls.AluOp = ALUOp::SLT;
+        } 
+        else if(instr.func3 == 0x3) {
+            instr.controls.AluOp = ALUOp::SLTU;
+        } 
+        else if(instr.func3 == 0x4) {
+            if(instr.func7 == 0x00) {
+                instr.controls.AluOp = ALUOp::XOR;
+            } 
+            else if(instr.func7 == 0x01) {
+                instr.controls.AluOp = ALUOp::DIV;
+            }
+        } 
+        else if(instr.func3 == 0x5) {
+            if(instr.func7 == 0x00) {
+                instr.controls.AluOp = ALUOp::SRL;
+            } 
+            else if(instr.func7 == 0x20) {
+                instr.controls.AluOp = ALUOp::SRA;
+            }
+        } 
+        else if(instr.func3 == 0x6) {
+            if(instr.func7 == 0x00) {
+                instr.controls.AluOp = ALUOp::OR;
+            } 
+            else if(instr.func7 == 0x01) {
+                instr.controls.AluOp = ALUOp::REM;
+            }
+        } 
+        else if(instr.func3 == 0x7) {
+            instr.controls.AluOp = ALUOp::AND;
+        }
     }
     else if(instr.opcode == 0x03){
         // lw
@@ -42,6 +91,34 @@ void decodeInstruction(Instruction& instr){
         instr.imm = (int32_t)((instr.raw) >> 20);
         instr.controls.AluSrc = true;
         instr.controls.RegWrite = true;
+        if(instr.func3 == 0x0) {
+            instr.controls.AluOp = ALUOp::ADD; // addi
+        } 
+        else if(instr.func3 == 0x1) {
+            instr.controls.AluOp = ALUOp::SLL; // slli
+        } 
+        else if(instr.func3 == 0x2) {
+            instr.controls.AluOp = ALUOp::SLT; // slti
+        } 
+        else if(instr.func3 == 0x3) {
+            instr.controls.AluOp = ALUOp::SLTU; // sltiu
+        } 
+        else if(instr.func3 == 0x4) {
+            instr.controls.AluOp = ALUOp::XOR; // xori
+        } 
+        else if(instr.func3 == 0x5) {
+            if((instr.raw >> 25) & 0x7F == 0x00) {
+                instr.controls.AluOp = ALUOp::SRL; // srli
+            } else if((instr.raw >> 25) & 0x7F == 0x20) {
+                instr.controls.AluOp = ALUOp::SRA; // srai
+            }
+        } 
+        else if(instr.func3 == 0x6) {
+            instr.controls.AluOp = ALUOp::OR; // ori
+        } 
+        else if(instr.func3 == 0x7) {
+            instr.controls.AluOp = ALUOp::AND; // andi
+        }
     }
     else if(instr.opcode == 0x67){
         // jalr x0 0(x1)
@@ -66,7 +143,7 @@ void decodeInstruction(Instruction& instr){
         instr.controls.AluSrc = true;
     }
     else if(instr.opcode == 0x63){
-        // beq 
+        // beq , bne, blt, bge, bltu, bgeu
         instr.type = Instruction_type::SB_TYPE;
         uint32_t imm12 = (instr.raw >> 31) & 0x1;    // bit 31
         uint32_t imm11 = (instr.raw >> 7) & 0x1;     // bit 7
@@ -76,6 +153,18 @@ void decodeInstruction(Instruction& instr){
         instr.imm = (int32_t)((imm12 << 12) | (imm11 << 11) | (imm10_5 << 5) | (imm4_1 << 1));
         instr.controls.is_branch = true;
         // instr.controls.AluSrc = true;  // pc + offset  // debug
+        if(instr.func3 == 0x0) {
+            instr.controls.AluOp = ALUOp::SUB; // beq uses SUB for comparison
+        } 
+        else if(instr.func3 == 0x1) {
+            instr.controls.AluOp = ALUOp::SUB; // bne uses SUB for comparison
+        } 
+        else if(instr.func3 == 0x4 || instr.func3 == 0x5) {
+            instr.controls.AluOp = ALUOp::SLT; // blt, bge use SLT for comparison
+        } 
+        else if(instr.func3 == 0x6 || instr.func3 == 0x7) {
+            instr.controls.AluOp = ALUOp::SLTU; // bltu, bgeu use SLTU for comparison
+        }
     }
     else if(instr.opcode == 0x6F){
         // jal 
@@ -94,7 +183,7 @@ void decodeInstruction(Instruction& instr){
         instr.type = Instruction_type::U_TYPE;
         instr.imm = (int32_t)(instr.raw & 0xFFFFF000);
         instr.controls.RegWrite = true;
-        instr.controls.AluSrc = true; // offset << 12
+        instr.controls.AluSrc = true; // rd = Pc + offset << 12
     }
     else if(instr.opcode == 0x37){
         // lui
