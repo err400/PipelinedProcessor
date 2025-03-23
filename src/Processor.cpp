@@ -1,6 +1,36 @@
 #include "Headers/Processor.hpp"
 
-
+bool Processor::resolveBranch(Instruction instr){
+    // read reg values
+    int32_t rs1_data = registers.readRegister(instr.rs1);
+    int32_t rs2_data = registers.readRegister(instr.rs2);
+    bool branch_taken = false;
+    switch(instr.func3){
+        case 0x0: // beq
+            branch_taken = (rs1_data == rs2_data);
+            break;
+        case 0x1: // bne
+            branch_taken = (rs1_data != rs2_data);
+            break;
+        case 0x4: // blt
+            branch_taken = (rs1_data < rs2_data);
+            break;
+        case 0x5: // bge
+            branch_taken = (rs1_data >= rs2_data);
+            break;
+        case 0x6: // bltu
+            branch_taken = (rs1_data < rs2_data);
+            break;
+        case 0x7: // bgeu
+            branch_taken = (rs1_data >= rs2_data);
+            break;
+    }
+    if(branch_taken){
+        pc += if_latch.pc + instr.imm; // change the global pc for the IF stage
+    }
+    return branch_taken;
+    // update pc if flag is true
+}
 void Processor::cycle() {
     writeback();
     mem();
@@ -23,7 +53,7 @@ void Processor::fetch() {
             if_latch.pc = pc;
             // read instructions from IM
             Instruction new_instr;
-            new_instr.raw = getInstruction(pc);
+            new_instr = getInstruction(pc);
             id_latch.instruction = new_instr;
             id_latch.pc = if_latch.pc;
             pc += 4; // increment the global pc for next instruction // debug
@@ -84,8 +114,8 @@ void Processor::execute() {
         // alu output in the case of jal / jalr
         // negative imm // debug
         ex_latch.is_stall = false;
-        uint32_t op1 = registers.readRegister(ex_latch.instruction.rs1);
-        uint32_t op2;
+        int32_t op1 = registers.readRegister(ex_latch.instruction.rs1);
+        int32_t op2;
 
         if(ex_latch.instruction.controls.AluSrc){
             op2 = ex_latch.instruction.imm;
@@ -157,6 +187,7 @@ void Processor::execute() {
             } 
             else if(ex_latch.instruction.opcode == 0x67) { 
                 // jalr
+                // to make sure the number is even
                 pc = (op1 + ex_latch.instruction.imm) & ~1;
             }
             ex_latch.is_jump = true;
@@ -221,4 +252,11 @@ void Processor::writeback() {
     //store data in wb_latch
 
     //update vector of strings with WB
+}
+
+Processor::Processor() {
+    cycles = 0;
+    pc = 0;
+    if_latch.is_stall = id_latch.is_stall = ex_latch.is_stall = mem_latch.is_stall = wb_latch.is_stall = false;
+    if_latch.num_stall = id_latch.num_stall = ex_latch.num_stall = mem_latch.num_stall = wb_latch.num_stall = 0;
 }

@@ -2,7 +2,7 @@
 #include <iostream>
 
 //decode function
-
+std::vector<Instruction> instructionMemory; // Empty initially
 void decodeInstruction(Instruction& instr){
     // first 7 bits : opcode 
     instr.opcode = instr.raw & 0x7F;
@@ -86,7 +86,7 @@ void decodeInstruction(Instruction& instr){
         instr.controls.RegWrite = true;
     }
     else if(instr.opcode == 0x13){
-        // addi 
+        // addi slli slti sltiu xori srli srai ori andi
         instr.type = Instruction_type::I_TYPE;
         instr.imm = (int32_t)((instr.raw) >> 20);
         instr.controls.AluSrc = true;

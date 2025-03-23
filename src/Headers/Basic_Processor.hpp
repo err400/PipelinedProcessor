@@ -1,4 +1,6 @@
-#include "InstructionFile.hpp"
+#ifndef BASIC_PROCESSOR_HPP
+#define BASIC_PROCESSOR_HPP
+
 #include "Registers.hpp"
 #include "Memory.hpp"
 #include "PipelineStages.hpp"
@@ -29,8 +31,10 @@ class Basic_Processor {
         virtual void writeback() = 0;
     
     public:
-        Basic_Processor();
+        // Basic_Processor(); // debug
         void run();
         void loadProgram(const char* filename);
 
 };
+
+#endif
