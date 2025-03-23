@@ -15,11 +15,32 @@ enum class Instruction_type{
     U_TYPE
 };
 
+enum class ALUOp{
+    ADD,
+    SUB,
+    SLL,
+    SLT,
+    SLTU,
+    XOR,
+    SRL,
+    SRA,
+    OR,
+    AND,
+    MUL,
+    // MULH,
+    // MULHSU,
+    // MULHU,
+    DIV,
+    // DIVU,
+    REM,
+    // REMU
+};
+
 struct control_signals{
     bool is_branch;
     bool MemRead;
     bool MemtoReg;
-    // int32_t AluOp;  // debug
+    ALUOp AluOp;
     bool MemWrite;
     bool AluSrc;
     bool RegWrite;
