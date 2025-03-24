@@ -49,7 +49,7 @@ struct control_signals{
 };
 
 struct Instruction {
-    int idx;  // debug // index of the instruction in the instructionMemory
+    // int idx;  // debug // index of the instruction in the instructionMemory
     uint32_t raw;
     uint8_t func7;
     uint8_t rs2;
@@ -67,6 +67,6 @@ struct Instruction {
 
 extern std::vector<Instruction> instructionMemory; // Empty initially
 
-void decodeInstruction(Instruction& instr);
+void decodeInstruction(Instruction* instr);
 
 #endif // INSTRUCTION_H

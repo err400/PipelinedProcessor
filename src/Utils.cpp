@@ -27,9 +27,9 @@ void readMachineCode(const char* fileName) {
     fclose(file);
 }
 
-Instruction getInstruction(int address) {
-    instructionMemory[address / 4].idx = address / 4;  // debug
-    return instructionMemory[address / 4];
+Instruction* getInstruction(int address) {
+    // instructionMemory[address / 4].idx = address / 4;  // debug
+    return &(instructionMemory[address / 4]);
 }
 
 void outputStageandCycles(const string& filename) {
@@ -59,15 +59,17 @@ void outputStageandCycles(const string& filename) {
 
 }
 
-bool checkDataHazard(Instruction instruction1, Instruction instruction2) {
-    int opcode1 = instruction1.opcode;
+bool checkDataHazard(Instruction* instruction1, Instruction* instruction2) {
+    int opcode1 = instruction1->opcode;
     // int opcode2 = instruction2.opcode;  // debug
     // Check if instruction1 is a JAL,LUI or AUIPC
     if (opcode1 == 0b1101111 || opcode1 ==0b0110111 || opcode1==0b0010111)
         return false;
-    int rs1 = instruction1.rs1;
-    int rs2 = instruction1.rs2;
-    int rd = instruction2.rd;
+    int rs1 = instruction1->rs1;
+    int rs2 = instruction1->rs2;
+    printf("rs1: %d\n", rs1); // debug
+    int rd = instruction2->rd;
+    printf("rs1: %d, rs2: %d, rd: %d\n", rs1, rs2, rd); // debug
     
     if (rs1 == rd || rs2 == rd)
         return true;
