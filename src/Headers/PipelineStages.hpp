@@ -6,7 +6,9 @@
 
 struct IFStageData {
     uint32_t pc;
+    bool is_first_stalled; // since id and ex will always be executed together
     Instruction instruction;
+   // Instruction* instruction;  // for printing  the vector of strings
     int num_stall;
     bool is_stall; //The is_stall flag indicates whether the data in the pipeline register is meaningful or if it's a "bubble"
     bool valid; // instruction inside the stage is not null

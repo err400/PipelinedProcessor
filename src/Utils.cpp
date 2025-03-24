@@ -28,6 +28,7 @@ void readMachineCode(const char* fileName) {
 }
 
 Instruction getInstruction(int address) {
+    instructionMemory[address / 4].idx = address / 4;  // debug
     return instructionMemory[address / 4];
 }
 

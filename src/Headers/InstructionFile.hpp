@@ -49,6 +49,7 @@ struct control_signals{
 };
 
 struct Instruction {
+    int idx;  // debug // index of the instruction in the instructionMemory
     uint32_t raw;
     uint8_t func7;
     uint8_t rs2;
