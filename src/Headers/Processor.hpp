@@ -16,6 +16,7 @@ class Processor : public Basic_Processor {
     public:
     Processor();
     bool resolveBranch(Instruction instr);
+    void forward(IDStageData* id_stage, EXStageData* ex_stage, MEMStageData* mem_stage);
 };
 
 

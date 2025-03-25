@@ -1,5 +1,46 @@
 #include "Headers/Processor.hpp"
 
+// check for forwarding here
+void Processor::forward(IDStageData* id_stage, EXStageData* ex_stage, MEMStageData* mem_stage){
+    // if there is data hazard only in case of lw instruction
+    if(ex_stage->instruction->controls.MemtoReg){
+        if(id_stage->instruction->rs1 == ex_stage->instruction->rd){
+            id_stage->num_stall = 1;
+            // instruction2->rs1 = instruction3->alu_output;
+        }
+        if(id_stage->instruction->rs2 == ex_stage->instruction->rd){
+            // id_stage->rs2_readdata = ex_stage->alu_output;
+            id_stage->num_stall = 1;
+            // instruction2->rs2 = instruction4->alu_output;
+        }
+    }
+    // debug
+    // id and ex
+    if(ex_stage->instruction->controls.RegWrite){
+        if(id_stage->instruction->rs1 == ex_stage->instruction->rd){
+            // id_stage->rs1_readdata = ex_stage->alu_output;
+            registers.writeRegister(id_stage->instruction->rs1, ex_stage->alu_output);
+        }
+        if(id_stage->instruction->rs2 == ex_stage->instruction->rd){
+            // id_stage->rs2_readdata = ex_stage->alu_output;
+            registers.writeRegister(id_stage->instruction->rs2, ex_stage->alu_output);
+
+        }
+    }
+    // ex and mem
+    if(mem_stage->instruction->controls.MemtoReg){
+        if(id_stage->instruction->rs1 == mem_stage->instruction->rd){
+            // id_stage->rs1_readdata = mem_stage->mem_read_data;
+            registers.writeRegister(mem_stage->instruction->rs1, mem_stage->mem_read_data);
+
+        }
+        if(id_stage->instruction->rs2 == mem_stage->instruction->rd){
+            // id_stage->rs2_readdata = mem_stage->mem_read_data;
+            registers.writeRegister(mem_stage->instruction->rs2, mem_stage->mem_read_data);
+        }
+    }
+}
+
 bool Processor::resolveBranch(Instruction instr){
     // read reg values
     int32_t rs1_data = registers.readRegister(instr.rs1);
