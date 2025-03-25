@@ -25,12 +25,9 @@ bool Processor::resolveBranch(Instruction instr){
             branch_taken = (rs1_data >= rs2_data);
             break;
     }
-    // if(branch_taken){
-    //     pc = if_latch.pc + instr.imm; // change the global pc for the IF stage
-    // }
     return branch_taken;
-    // update pc if flag is true
 }
+
 void Processor::cycle() {
     // default value in the vector of strings for each instruction
     for(int i = 0;i<instructionMemory.size();i++){
@@ -50,9 +47,6 @@ void Processor::fetch() {
         id_latch.valid = false;
         id_latch.branch_is_taken_resolved = false;
         printf("made latch invalid: cycles nowwwww: %d\n", cycles); // debug
-    }
-    else{
-        
     }
     if(if_latch.num_stall > 0){
         // push - in the instruction vector of strings
@@ -104,6 +98,7 @@ void Processor::decode() {
         id_latch.instruction->vec.back() = "-";
         id_latch.num_stall--;
         if(id_latch.num_stall == 0){
+            // branch instruction
             if(id_latch.instruction->controls.is_branch){
                 // printf("id_latch.pc: %d\n", id_latch.pc); // debug
                 if(resolveBranch(*(id_latch.instruction))){
@@ -114,6 +109,31 @@ void Processor::decode() {
                     printf("cycles nowwwww: %d\n", cycles); // debug
                     // pc += id_latch.instruction->imm;
                 }
+            }
+            // jump instruction
+            if(id_latch.instruction->controls.is_jump){
+                // printf("jjjjjjjjjjjjjjjjjjjj\n"); // debug
+                // printf("id_latch.instruction.rd: %d\n", id_latch.instruction->rd); // debug
+                if(id_latch.instruction->opcode == 0x6F) { 
+                    // jal
+                    printf("id_latch.pc: %d\n", id_latch.pc); // debug
+                    printf("id_latch.instruction->imm: %d\n", id_latch.instruction->imm); // debug
+                    // update the ra value here
+                    registers.writeRegister(id_latch.instruction->rd, id_latch.pc + 4);
+                    id_latch.branch_is_taken_resolved = true;
+                    pc = id_latch.pc + id_latch.instruction->imm;
+                    printf("jal pc: %d\n", pc); // debug
+                } 
+                else if(id_latch.instruction->opcode == 0x67) { 
+                    // jalr
+                    // to make sure the number is even
+                    // update the ra value here
+                    registers.writeRegister(id_latch.instruction->rd, id_latch.pc + 4);
+                    int32_t op1 = registers.readRegister(id_latch.instruction->rs1);
+                    id_latch.branch_is_taken_resolved = true;
+                    pc = (op1 + id_latch.instruction->imm) & ~1;
+                }
+                ex_latch.is_jump = true;
             }
         }
         return;
@@ -155,6 +175,26 @@ void Processor::decode() {
                 pc = if_latch.pc + if_latch.instruction->imm;
                 // pc += id_latch.instruction->imm;
             }
+        }
+        if(if_latch.instruction->controls.is_jump){
+            if(if_latch.instruction->opcode == 0x6F) { 
+                // jal
+                printf("id_latch.pc: %d\n", if_latch.pc); // debug
+                printf("id_latch.instruction->imm: %d\n", if_latch.instruction->imm); // debug
+                // update the ra value here
+                registers.writeRegister(if_latch.instruction->rd, if_latch.pc + 4);
+                pc = if_latch.pc + if_latch.instruction->imm;
+                printf("jal pc: %d\n", pc); // debug
+            } 
+            else if(if_latch.instruction->opcode == 0x67) { 
+                // jalr
+                // to make sure the number is even
+                // update the ra value here
+                int32_t op1 = registers.readRegister(if_latch.instruction->rs1);
+                registers.writeRegister(if_latch.instruction->rd, if_latch.pc + 4);
+                pc = (op1 + if_latch.instruction->imm) & ~1;
+            }
+            ex_latch.is_jump = true;
         }
     }
     //store data in id_latch
@@ -251,16 +291,22 @@ void Processor::execute() {
         }
         
         if(id_latch.instruction->controls.is_jump){
+            // printf("jjjjjjjjjjjjjjjjjjjj\n"); // debug
+            // printf("id_latch.instruction.rd: %d\n", id_latch.instruction->rd); // debug
             if(id_latch.instruction->opcode == 0x6F) { 
                 // jal
                 printf("id_latch.pc: %d\n", id_latch.pc); // debug
                 printf("id_latch.instruction->imm: %d\n", id_latch.instruction->imm); // debug
+                // update the ra value here
+                registers.writeRegister(id_latch.instruction->rd, id_latch.pc + 4);
                 pc = id_latch.pc + id_latch.instruction->imm;
                 printf("jal pc: %d\n", pc); // debug
             } 
             else if(id_latch.instruction->opcode == 0x67) { 
                 // jalr
                 // to make sure the number is even
+                // update the ra value here
+                registers.writeRegister(id_latch.instruction->rd, id_latch.pc + 4);
                 pc = (op1 + id_latch.instruction->imm) & ~1;
             }
             ex_latch.is_jump = true;

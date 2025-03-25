@@ -3,7 +3,10 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include<iomanip>
+#include <filesystem>
 using namespace std;
+namespace fs = std::__fs::filesystem;
 
 void readMachineCode(const char* fileName) {
     FILE* file = fopen(fileName, "r");
@@ -38,7 +41,9 @@ void outputStageandCycles(const string& filename) {
     // nonforwarding processor will look as follows:
     // addi x5 x0 0;IF;ID;EX;MEM;WB
     // add x6 x5 x10; ;IF;ID;-;-;EX;MEM;WB
-    string file_dest = "outputfiles/" + filename + "_noforward_out.txt";
+    fs::path path_obj(filename);
+    string base_filename = path_obj.filename(); 
+    string file_dest = "outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
     ofstream outputFile(file_dest);
     if (!outputFile.is_open()) {
         cerr << "Error: Unable to open file " << file_dest << endl;
@@ -47,10 +52,10 @@ void outputStageandCycles(const string& filename) {
     int n = instructionMemory.size();
     for(int i = 0;i<n;i++){
         Instruction instr = instructionMemory[i];
-        outputFile<<instr.instStr<<";   ";
+        outputFile<<left << setw(20)<<instr.instStr<<";  ";
         // print the instruction
         for(auto it: instr.vec){
-            outputFile<<it<<";";
+            outputFile<< setw(3)<<it<<";";
         }
         outputFile<<endl;
     }

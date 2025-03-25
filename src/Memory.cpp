@@ -1,7 +1,7 @@
 #include "Headers/Memory.hpp"
 
 Memory::Memory(){
-    std::fill(dataMemory.begin(), dataMemory.end(), 1);
+    std::fill(dataMemory.begin(), dataMemory.end(), 0);
 }
 uint32_t Memory::readMemory(uint32_t address){
     return dataMemory[address];

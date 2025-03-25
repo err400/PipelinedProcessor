@@ -58,7 +58,7 @@ struct Instruction {
     uint8_t rd;
     uint8_t opcode;
     // no two imm in case of stores
-    uint32_t imm;
+    int32_t imm;
     Instruction_type type;
     control_signals controls;
     vector<string> vec;
