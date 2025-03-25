@@ -25,9 +25,9 @@ bool Processor::resolveBranch(Instruction instr){
             branch_taken = (rs1_data >= rs2_data);
             break;
     }
-    if(branch_taken){
-        pc = if_latch.pc + instr.imm; // change the global pc for the IF stage
-    }
+    // if(branch_taken){
+    //     pc = if_latch.pc + instr.imm; // change the global pc for the IF stage
+    // }
     return branch_taken;
     // update pc if flag is true
 }
@@ -46,6 +46,14 @@ void Processor::cycle() {
 
 void Processor::fetch() {
     printf("fetch in processor\n"); // debug
+    if(id_latch.branch_is_taken_resolved){
+        id_latch.valid = false;
+        id_latch.branch_is_taken_resolved = false;
+        printf("made latch invalid: cycles nowwwww: %d\n", cycles); // debug
+    }
+    else{
+        
+    }
     if(if_latch.num_stall > 0){
         // push - in the instruction vector of strings
         if_latch.instruction->vec.back() = "i-";
@@ -63,16 +71,18 @@ void Processor::fetch() {
             // jal -> update global pc in that case
         }
         Instruction* new_instr;
+        int n = instructionMemory.size();
+        if(if_latch.pc >= 4*n){ // debug
+            is_completed = true;
+            return;
+        }
         new_instr = getInstruction(if_latch.pc);
         if_latch.valid = true;
-        id_latch.valid = true;
+        if(!id_latch.branch_is_taken_resolved){
+            id_latch.valid = true;
+        }
         if_latch.instruction = new_instr;
-        printf("fetch2 in processor\n"); // debug
-        printf("instruction: %x", if_latch.instruction->opcode); // debug
-        
-        printf("\n");
         if_latch.instruction->vec.back() = "IF";
-        // printf("fetch2 in processor\n"); // debug
         pc += 4; // increment the global pc for next instruction // debug
     }
 
@@ -82,35 +92,54 @@ void Processor::fetch() {
         if_latch.is_first_stalled = false;
     }
     
-    //pc
-    //read instruction from instruction memory
-    //Update space in vector of strings according to cycle (Append a space)
-    //increment pc
-    //store data in if_latch
-
-    //update vector of strings with IF
 }
 
 void Processor::decode() {
     printf("decode in processor\n"); // debug
-    if(id_latch.num_stall > 0){
-        id_latch.instruction->vec.back() = "-";
-        id_latch.num_stall--;
-        return;
-    }
+
     if(!id_latch.valid){
         return;
     }
+    if(id_latch.num_stall > 0){
+        id_latch.instruction->vec.back() = "-";
+        id_latch.num_stall--;
+        if(id_latch.num_stall == 0){
+            if(id_latch.instruction->controls.is_branch){
+                // printf("id_latch.pc: %d\n", id_latch.pc); // debug
+                if(resolveBranch(*(id_latch.instruction))){
+                    pc = id_latch.pc + id_latch.instruction->imm;
+                    // kill the next instruction where currently IF is being implemented
+                    // id_latch.instruction = nullptr;
+                    id_latch.branch_is_taken_resolved = true;
+                    printf("cycles nowwwww: %d\n", cycles); // debug
+                    // pc += id_latch.instruction->imm;
+                }
+            }
+        }
+        return;
+    }
+
     // comes here when there is no stall or first time stall is to be detected
     id_latch.is_stall = false;
     //read data from if_latch
     //decode instruction
     decodeInstruction(if_latch.instruction);
     //check for data hazards
-    if(ex_latch.instruction != nullptr){
+    if(mem_latch.instruction != nullptr && !mem_latch.is_stall){
+        if(checkDataHazard(if_latch.instruction, mem_latch.instruction)){
+            printf("Data hazard2 detected\n"); // debug
+            printf("cycle: %d\n", cycles); // debug
+            // propogate the stalls
+            if_latch.is_first_stalled = true;
+            id_latch.is_stall = true;
+            id_latch.num_stall = 1;
+        }
+    }
+
+    if(ex_latch.instruction != nullptr && !ex_latch.is_stall){
         if(checkDataHazard(if_latch.instruction, ex_latch.instruction)){
-            // printf("Data hazard1 detected\n"); // debug
-            // printf("cycle: %d\n", cycles); // debug
+            printf("Data hazard1 detected\n"); // debug
+            printf("cycle: %d\n", cycles); // debug
             // propogate the stalls
             if_latch.is_first_stalled = true;
             id_latch.is_stall = true;
@@ -118,23 +147,14 @@ void Processor::decode() {
         }
     }
     
-    if(mem_latch.instruction != nullptr){
-        printf("here\n"); // debug
-        if(checkDataHazard(if_latch.instruction, mem_latch.instruction)){
-            // printf("Data hazard2 detected\n"); // debug
-            // printf("cycle: %d\n", cycles); // debug
-            // propogate the stalls
-            if_latch.is_first_stalled = true;
-            id_latch.is_stall = true;
-            id_latch.num_stall = 1;
-        }
-    }
     //resolve branch
-    if(if_latch.instruction->controls.is_branch){ //debug
-        if(resolveBranch(*(if_latch.instruction))){
-            if_latch.is_stall = id_latch.is_stall = ex_latch.is_stall = mem_latch.is_stall = wb_latch.is_stall = true;
-            if_latch.num_stall = id_latch.num_stall = ex_latch.num_stall = mem_latch.num_stall = wb_latch.num_stall = 2;
-            return;
+    if(!id_latch.is_stall){
+        printf("herreeeee\n"); // debug
+        if(if_latch.instruction->controls.is_branch){
+            if(resolveBranch(*(if_latch.instruction))){
+                pc = if_latch.pc + if_latch.instruction->imm;
+                // pc += id_latch.instruction->imm;
+            }
         }
     }
     //store data in id_latch
@@ -233,7 +253,10 @@ void Processor::execute() {
         if(id_latch.instruction->controls.is_jump){
             if(id_latch.instruction->opcode == 0x6F) { 
                 // jal
-                pc = ex_latch.pc + id_latch.instruction->imm;
+                printf("id_latch.pc: %d\n", id_latch.pc); // debug
+                printf("id_latch.instruction->imm: %d\n", id_latch.instruction->imm); // debug
+                pc = id_latch.pc + id_latch.instruction->imm;
+                printf("jal pc: %d\n", pc); // debug
             } 
             else if(id_latch.instruction->opcode == 0x67) { 
                 // jalr
@@ -297,19 +320,42 @@ void Processor::mem() { //debug
 void Processor::writeback() {
     printf("writeback in processor\n"); // debug
 
+    if(!wb_latch.valid){
+        return;
+    }
+
     if(mem_latch.is_stall){
         wb_latch.is_stall = true;
         wb_latch.num_stall = mem_latch.num_stall + 1;
     }
 
-    if(wb_latch.num_stall > 0){
-        wb_latch.num_stall--;
+    if(wb_latch.is_stall){
+        if(wb_latch.num_stall > 0){
+            wb_latch.num_stall--;
+        }
+        else if(wb_latch.num_stall == 0){
+            wb_latch.is_stall = false;
+            if(mem_latch.instruction->controls.RegWrite){
+                // printf("debug1 : regwrite in processor\n"); // debug
+                if(mem_latch.instruction->controls.MemtoReg){
+                    registers.writeRegister(mem_latch.instruction->rd, mem_latch.mem_read_data);
+                }
+                else if(mem_latch.instruction->controls.is_jump){
+                    registers.writeRegister(mem_latch.instruction->rd, mem_latch.pc+4); //jal jalr
+                }
+                else{
+                    registers.writeRegister(mem_latch.instruction->rd, mem_latch.alu_output);
+                }
+            }
+
+            wb_latch.pc=mem_latch.pc;
+            mem_latch.instruction->vec.back() = "WB";
+            wb_latch.write_data = mem_latch.alu_output; // debug
+            //update vector of strings with WB
+        }
         return;
     }
-    if(!wb_latch.valid){
-        // no instr currently in writeback stage (not even in stall)
-        return;
-    }
+    // no stall
     wb_latch.is_stall = false;
     //read data from mem_latch
 
@@ -329,15 +375,16 @@ void Processor::writeback() {
 
     //store data in wb_latch
     wb_latch.pc=mem_latch.pc;
-    wb_latch.instruction=mem_latch.instruction;
-    wb_latch.instruction->vec.back() = "WB";
+    mem_latch.instruction->vec.back() = "WB";
     wb_latch.write_data = mem_latch.alu_output; // debug
     //update vector of strings with WB
 }
 
 Processor::Processor() {
     cycles = 0;
+    is_completed = false;
     pc = 0;
+    id_latch.branch_is_taken_resolved = false;
     if_latch.instruction = nullptr;
     id_latch.instruction = nullptr;
     ex_latch.instruction = nullptr;

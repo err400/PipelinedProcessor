@@ -20,7 +20,7 @@ class Basic_Processor {
         uint32_t pc = 0;
 
         int cycles;
-
+        bool is_completed;
         protected:
         virtual void cycle() = 0;
 

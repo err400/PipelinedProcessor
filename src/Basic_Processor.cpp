@@ -5,10 +5,10 @@ void Basic_Processor::loadProgram(const char* filename) {
 }
 
 void Basic_Processor::run() {
-    while (true) {
+    while (!is_completed) {
         cycle();
         cycles++;
-        if(cycles>10){
+        if(cycles>15){
             break;  //debug
         }
     }

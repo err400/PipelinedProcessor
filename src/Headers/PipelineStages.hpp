@@ -17,7 +17,7 @@ struct IDStageData {
     Instruction* instruction; //Different instruction in each stage
     //Instruction passed for control signals
     uint32_t pc;
-
+    bool branch_is_taken_resolved;
     uint32_t rs1_readdata;
     uint32_t rs2_readdata;
     //Immediate, rs1, rs2 value in Instruction itself
