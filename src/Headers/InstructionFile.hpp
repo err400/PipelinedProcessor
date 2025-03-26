@@ -66,6 +66,7 @@ struct Instruction {
 };
 
 extern std::vector<Instruction> instructionMemory; // Empty initially
+// extern bool is_forwarded;
 
 void decodeInstruction(Instruction* instr);
 

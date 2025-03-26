@@ -1,42 +1,49 @@
 #include "Headers/Processor.hpp"
 
 // check for forwarding here
-void Processor::forward(IDStageData* id_stage, EXStageData* ex_stage, MEMStageData* mem_stage){
-    // if there is data hazard only in case of lw instruction
-    if(ex_stage->instruction->controls.MemtoReg){
-        if(id_stage->instruction->rs1 == ex_stage->instruction->rd){
-            id_stage->num_stall = 1;
-            // instruction2->rs1 = instruction3->alu_output;
+void Processor::forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage, MEMStageData* mem_stage){
+    printf("FORWARD FUNCTION CALLED\n"); // debug
+    // if there is data hazard only in case of lw instruction in ex stage
+    if(ex_stage->instruction != nullptr){
+        if(ex_stage->instruction->controls.MemtoReg){
+            printf("WILL INCREASE FSTALLS\n"); // debug
+            if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
+                printf("TR/////\n"); // debug
+                id_stage->num_stall = 1;
+                if_stage->is_first_stalled = true;
+            }
+            if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
+                printf("TR/////\n"); // debug
+                id_stage->num_stall = 1;
+                if_stage->is_first_stalled = true;
+            }
         }
-        if(id_stage->instruction->rs2 == ex_stage->instruction->rd){
-            // id_stage->rs2_readdata = ex_stage->alu_output;
-            id_stage->num_stall = 1;
-            // instruction2->rs2 = instruction4->alu_output;
+        // ex and id (normal alu instructions in ex)
+        else if(ex_stage->instruction->controls.RegWrite){
+            if(id_stage->instruction->rs1 == ex_stage->instruction->rd){
+                registers.writeRegister(id_stage->instruction->rs1, ex_stage->alu_output);
+            }
+            if(id_stage->instruction->rs2 == ex_stage->instruction->rd){
+                registers.writeRegister(id_stage->instruction->rs2, ex_stage->alu_output);
+
+            }
         }
     }
-    // debug
-    // id and ex
-    if(ex_stage->instruction->controls.RegWrite){
-        if(id_stage->instruction->rs1 == ex_stage->instruction->rd){
-            // id_stage->rs1_readdata = ex_stage->alu_output;
-            registers.writeRegister(id_stage->instruction->rs1, ex_stage->alu_output);
-        }
-        if(id_stage->instruction->rs2 == ex_stage->instruction->rd){
-            // id_stage->rs2_readdata = ex_stage->alu_output;
-            registers.writeRegister(id_stage->instruction->rs2, ex_stage->alu_output);
+    
+    // mem and ex
+    // think of more cases // debug
+    // mem and id
+    // lw and beq case
+    // lw in MEM stage
+    if(mem_stage->instruction != nullptr){
+        if(mem_stage->instruction->controls.MemtoReg){
+            if(id_stage->instruction->rs1 == mem_stage->instruction->rd){
+                registers.writeRegister(mem_stage->instruction->rd, mem_stage->mem_read_data);
 
-        }
-    }
-    // ex and mem
-    if(mem_stage->instruction->controls.MemtoReg){
-        if(id_stage->instruction->rs1 == mem_stage->instruction->rd){
-            // id_stage->rs1_readdata = mem_stage->mem_read_data;
-            registers.writeRegister(mem_stage->instruction->rs1, mem_stage->mem_read_data);
-
-        }
-        if(id_stage->instruction->rs2 == mem_stage->instruction->rd){
-            // id_stage->rs2_readdata = mem_stage->mem_read_data;
-            registers.writeRegister(mem_stage->instruction->rs2, mem_stage->mem_read_data);
+            }
+            if(id_stage->instruction->rs2 == mem_stage->instruction->rd){
+                registers.writeRegister(mem_stage->instruction->rd, mem_stage->mem_read_data);
+            }
         }
     }
 }
@@ -141,7 +148,16 @@ void Processor::decode() {
         id_latch.instruction->vec.back() = "-";
         id_latch.num_stall--;
         if(id_latch.num_stall == 0){
-            // branch instruction
+            if(is_forwarded){
+                // lw came in MEM stage now - read from MEM and resolve branch
+                if(id_latch.instruction->rs1 == mem_latch.instruction->rd){
+                    registers.writeRegister(mem_latch.instruction->rd, mem_latch.mem_read_data);
+                }
+                if(id_latch.instruction->rs2 == mem_latch.instruction->rd){
+                    registers.writeRegister(mem_latch.instruction->rd, mem_latch.mem_read_data);
+                }
+            }
+            // now resolve branch if applicable
             if(id_latch.instruction->controls.is_branch){
                 printf("id_latch.pc: %d\n", id_latch.pc); // debug
                 if(resolveBranch(*(id_latch.instruction))){
@@ -181,6 +197,7 @@ void Processor::decode() {
                 }
                 ex_latch.is_jump = true;
             }
+
         }
         return;
     }
@@ -189,30 +206,33 @@ void Processor::decode() {
     printf("in decode\n"); // debug
     decodeInstruction(if_latch.instruction);
     //check for data hazards
-    if(mem_latch.instruction != nullptr && !mem_latch.is_stall){
-        if(checkDataHazard(if_latch.instruction, mem_latch.instruction)){
-            printf("Data hazard2 detected\n"); // debug
-            printf("cycle: %d\n", cycles); // debug
-            // propogate the stalls
-            if_latch.is_first_stalled = true;
-            id_latch.is_stall = true;
-            id_latch.num_stall = 1;
-        }
+    if(is_forwarded){
+        printf("FORWARDING CASE\n"); // debug
+        forward(&if_latch, &id_latch, &ex_latch, &mem_latch);
     }
-
-    if(ex_latch.instruction != nullptr && !ex_latch.is_stall){
-        if(checkDataHazard(if_latch.instruction, ex_latch.instruction)){
-            printf("Data hazard1 detected\n"); // debug
-            printf("cycle: %d\n", cycles); // debug
-            // propogate the stalls
-            if_latch.is_first_stalled = true;
-            id_latch.is_stall = true;
-            id_latch.num_stall = 2;
+    else{
+        if(mem_latch.instruction != nullptr && !mem_latch.is_stall){
+            if(checkDataHazard(if_latch.instruction, mem_latch.instruction)){
+                // propogate the stalls
+                if_latch.is_first_stalled = true;
+                id_latch.is_stall = true;
+                id_latch.num_stall = 1;
+            }
         }
+
+        if(ex_latch.instruction != nullptr && !ex_latch.is_stall){
+            if(checkDataHazard(if_latch.instruction, ex_latch.instruction)){
+                // propogate the stalls
+                if_latch.is_first_stalled = true;
+                id_latch.is_stall = true;
+                id_latch.num_stall = 2;
+            }
+        }
+        
     }
     
     //resolve branch
-    if(!id_latch.is_stall){
+    if(!id_latch.is_stall && !is_forwarded){
         printf("herreeeee\n"); // debug
         printf("old_pc: %d\n", old_pc); // debug
         printf("if_latch.pc: %d\n", if_latch.pc); // debug
@@ -465,6 +485,7 @@ Processor::Processor(bool is_forward) {
     cycles = 0;
     is_completed = false;
     pc = 4;
+    is_forwarded = is_forward;
     id_latch.branch_is_taken_resolved = false;
     if_latch.instruction = nullptr;
     id_latch.instruction = nullptr;

@@ -8,18 +8,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::string inputFile = argv[1];
+    const string Filename = argv[1];
+    // is_forwarded = true;
     // int cycleCount = std::stoi(argv[2]);  // debug
+    Processor processor(true); 
     
-
-    // Create a forwarding processor
-    Processor processor(true);  // true indicates forwarding
-    
-    // Load program
-    processor.loadProgram(inputFile.c_str());
-    
-    // Run the processor
+    processor.loadProgram(Filename.c_str());
     processor.run();
-
+    outputStageandCycles(Filename);
     return 0;
 }
