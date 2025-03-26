@@ -88,7 +88,7 @@ void decodeInstruction(Instruction* instr){
     else if(instr->opcode == 0x13){
         // addi slli slti sltiu xori srli srai ori andi
         instr->type = Instruction_type::I_TYPE;
-        instr->imm = ((int32_t)(instr->raw >> 20) << 20) >> 20;
+        instr->imm = ((int32_t)(instr->raw >> 20) << 20) >> 20; // debug
         instr->controls.AluSrc = true;
         instr->controls.RegWrite = true;
         if(instr->func3 == 0x0) {

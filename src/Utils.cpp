@@ -50,7 +50,7 @@ void outputStageandCycles(const string& filename) {
     // else{
     //     file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
     // }
-    file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_forward_out.txt";
+    file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
     ofstream outputFile(file_dest);
     if (!outputFile.is_open()) {
         cerr << "Error: Unable to open file " << file_dest << endl;
@@ -74,6 +74,10 @@ void outputStageandCycles(const string& filename) {
 bool checkDataHazard(Instruction* instruction1, Instruction* instruction2) {
     int opcode1 = instruction1->opcode;
     // int opcode2 = instruction2.opcode;  // debug
+    // sw - no stalls
+    if(instruction2->controls.MemWrite){
+        return false;
+    }
     // Check if instruction1 is a JAL,LUI or AUIPC
     if (opcode1 == 0b1101111 || opcode1 ==0b0110111 || opcode1==0b0010111)
         return false;

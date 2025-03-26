@@ -1,9 +1,9 @@
-lb x5 0 x11         ;  IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
-sb x5 0 x10         ;     ;IF ;ID ;-  ;-  ;EX ;MEM;WB ;   ;   ;   ;IF ;ID ;EX ;MEM;WB ;
-beq x5 x0 8         ;     ;   ;IF ;i- ;i- ;ID ;-  ;-  ;EX ;MEM;WB ;   ;IF ;ID ;-  ;-  ;
-addi x10 x10 1      ;     ;   ;   ;   ;   ;IF ;i- ;i- ;   ;   ;   ;   ;   ;IF ;i- ;i- ;
-addi x10 x10 1      ;     ;   ;   ;   ;   ;   ;   ;   ;IF ;ID ;EX ;MEM;WB ;   ;   ;   ;
-jal x0 -16          ;     ;   ;   ;   ;   ;   ;   ;   ;   ;IF ;ID ;EX ;MEM;WB ;   ;   ;
-addi x10 x10 1      ;     ;   ;   ;   ;   ;   ;   ;   ;   ;   ;IF ;   ;   ;   ;   ;   ;
-addi x10 x10 1      ;     ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
-addi x11 x11 1      ;     ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+lb x5 0 x11         ;  IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+sb x5 0 x10         ;     ;IF ;ID ;-  ;-  ;EX ;MEM;WB ;   ;IF ;ID ;EX ;MEM;WB ;   ;   ;IF ;ID ;EX ;MEM;WB ;
+beq x5 x0 8         ;     ;   ;IF ;i- ;i- ;ID ;EX ;MEM;WB ;   ;IF ;ID ;-  ;EX ;MEM;WB ;   ;IF ;ID ;-  ;EX ;
+addi x10 x10 1      ;     ;   ;   ;   ;   ;IF ;   ;   ;   ;   ;   ;IF ;i- ;   ;   ;   ;   ;   ;IF ;i- ;   ;
+addi x10 x10 1      ;     ;   ;   ;   ;   ;   ;IF ;ID ;EX ;MEM;WB ;   ;   ;IF ;ID ;EX ;MEM;WB ;   ;   ;IF ;
+jal x0 -16          ;     ;   ;   ;   ;   ;   ;   ;IF ;ID ;EX ;MEM;WB ;   ;   ;IF ;ID ;EX ;MEM;WB ;   ;   ;
+addi x10 x10 1      ;     ;   ;   ;   ;   ;   ;   ;   ;IF ;   ;   ;   ;   ;   ;   ;IF ;   ;   ;   ;   ;   ;
+addi x10 x10 1      ;     ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+addi x11 x11 1      ;     ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
