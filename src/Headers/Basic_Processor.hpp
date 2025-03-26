@@ -17,7 +17,8 @@ class Basic_Processor {
         Registers registers;
         Memory memory;
 
-        uint32_t pc = 0;
+        uint32_t pc = 4;
+        uint32_t old_pc = 0;
 
         int cycles;
         bool is_completed;

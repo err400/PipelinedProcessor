@@ -5,7 +5,8 @@
 #include "InstructionFile.hpp"
 
 struct IFStageData {
-    uint32_t pc;
+    // uint32_t old_pc; // initialize to 0
+    uint32_t pc;    // initialize to 4
     bool is_first_stalled; // since id and ex will always be executed together
     Instruction* instruction;
     int num_stall;
