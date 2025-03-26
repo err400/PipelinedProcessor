@@ -1,10 +1,113 @@
 #include "Headers/Processor.hpp"
 
 // check for forwarding here
-void Processor::forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage, MEMStageData* mem_stage){
+void Processor::forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage, MEMStageData* mem_stage, WBStageData* wb_stage){
     // if there is data hazard only in case of lw instruction in ex stage
-    if(ex_stage->instruction != nullptr){
-        if(ex_stage->instruction->controls.MemtoReg){
+    // if(ex_stage->instruction != nullptr){
+    //     if(ex_stage->instruction->controls.MemtoReg){
+    //         if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
+    //             id_stage->num_stall = 1;
+    //             if_stage->is_first_stalled = true;
+    //         }
+    //         if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
+    //             id_stage->num_stall = 1;
+    //             if_stage->is_first_stalled = true;
+    //         }
+    //     }
+    //     // ex and id (normal alu instructions in ex)
+    //     else if(ex_stage->instruction->controls.RegWrite){
+    //         if(id_stage->instruction->rs1 == ex_stage->instruction->rd){
+    //             registers.writeRegister(id_stage->instruction->rs1, ex_stage->alu_output);
+    //         }
+    //         if(id_stage->instruction->rs2 == ex_stage->instruction->rd){
+    //             registers.writeRegister(id_stage->instruction->rs2, ex_stage->alu_output);
+
+    //         }
+    //     }
+    // }
+    // // mem and ex
+    // // think of more cases // debug
+    // // mem and id
+    // // lw and beq case - done
+    // // lw in MEM stage - forward
+    // if(mem_stage->instruction != nullptr){
+    //     if(mem_stage->instruction->controls.MemtoReg){
+    //         if(id_stage->instruction->rs1 == mem_stage->instruction->rd){
+    //             registers.writeRegister(mem_stage->instruction->rd, mem_stage->mem_read_data);
+
+    //         }
+    //         if(id_stage->instruction->rs2 == mem_stage->instruction->rd){
+    //             registers.writeRegister(mem_stage->instruction->rd, mem_stage->mem_read_data);
+    //         }
+    //     }
+    // }
+    if(if_stage->instruction->type == Instruction_type::R_TYPE || if_stage->instruction->opcode == 0x13){
+        //check prev instruction
+        if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
+            if(ex_stage->instruction->controls.MemRead){
+                id_stage->num_stall = 1;
+                if_stage->is_first_stalled = true;
+            } //ex gets data from mem stage (lw followed by add)
+            else{
+                id_stage->rs1_readdata = ex_stage->alu_output;
+            } //ex gets data from ex stage (add followed by add)
+        }
+        else if(if_stage->instruction->rs1 == mem_stage->instruction->rd){
+            if(mem_stage->instruction->controls.MemRead){
+                id_stage->rs1_readdata = mem_stage->mem_read_data;
+            } //ex gets data from mem stage (lw followed by NoOp followed by add)
+            else{
+                id_stage->rs1_readdata = mem_stage->alu_output; //ex gets data from mem stage (add followed by NoOp followed by add)
+            }
+        }
+    }
+    else if(if_stage->instruction->type == Instruction_type::R_TYPE){ // pther than immediate types
+        if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
+            if(ex_stage->instruction->controls.MemRead){
+                id_stage->num_stall = 1;
+                if_stage->is_first_stalled = true;
+            } //ex gets data from mem stage (lw followed by add)
+            else{
+                id_stage->rs2_readdata = ex_stage->alu_output;
+            } //ex gets data from ex stage (add followed by add)
+        }
+        else if(if_stage->instruction->rs2 == mem_stage->instruction->rd){
+            if(mem_stage->instruction->controls.MemRead){
+                id_stage->rs2_readdata = mem_stage->mem_read_data;
+            } //ex gets data from mem stage (lw followed by NoOp followed by add)
+            else{
+                id_stage->rs2_readdata = mem_stage->alu_output; //ex gets data from mem stage (add followed by NoOp followed by add)
+            }
+        }
+    }
+    else if(if_stage->instruction->opcode == 0x03){ //lw
+        // add followed by lw
+        // add followed by noOp followed by lw
+        // sw followed by lw
+        // sw followed by noOp followed by lw
+        // lw followed by lw
+        // lw followed by noOp followed by lw
+    }
+    else if(if_stage->instruction->opcode == 0x23){ //sw
+        // sw followed by sw
+        // sw followed by noOp followed by sw
+        // lw followed by sw
+        // lw followed by noOp followed by sw
+    }
+    else if(if_stage->instruction->opcode == 0x63){ //conditional branches
+        //lw followed by beq
+        if(ex_stage->instruction->controls.MemRead){
+            if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
+                id_stage->num_stall = 2;
+                if_stage->is_first_stalled = true;
+            }
+            if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
+                id_stage->num_stall = 2;
+                if_stage->is_first_stalled = true;
+            }
+        }
+        //add followed by beq
+        else if(ex_stage->instruction->controls.RegWrite){
             if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
                 id_stage->num_stall = 1;
                 if_stage->is_first_stalled = true;
@@ -14,32 +117,18 @@ void Processor::forward(IFStageData* if_stage, IDStageData* id_stage, EXStageDat
                 if_stage->is_first_stalled = true;
             }
         }
-        // ex and id (normal alu instructions in ex)
-        else if(ex_stage->instruction->controls.RegWrite){
-            if(id_stage->instruction->rs1 == ex_stage->instruction->rd){
-                registers.writeRegister(id_stage->instruction->rs1, ex_stage->alu_output);
-            }
-            if(id_stage->instruction->rs2 == ex_stage->instruction->rd){
-                registers.writeRegister(id_stage->instruction->rs2, ex_stage->alu_output);
-
-            }
+        //add followed by noOp by beq
+        else if(mem_stage->instruction->controls.RegWrite){
+            //debug
         }
+        //lw followed by NoOp by beq
+        else if(mem_stage->instruction->controls.MemRead){
+            //debug
+        }
+
     }
-    // mem and ex
-    // think of more cases // debug
-    // mem and id
-    // lw and beq case - done
-    // lw in MEM stage - forward
-    if(mem_stage->instruction != nullptr){
-        if(mem_stage->instruction->controls.MemtoReg){
-            if(id_stage->instruction->rs1 == mem_stage->instruction->rd){
-                registers.writeRegister(mem_stage->instruction->rd, mem_stage->mem_read_data);
+    else if(if_stage->instruction->opcode == 0x37){ //lui
 
-            }
-            if(id_stage->instruction->rs2 == mem_stage->instruction->rd){
-                registers.writeRegister(mem_stage->instruction->rd, mem_stage->mem_read_data);
-            }
-        }
     }
 }
 
@@ -211,7 +300,7 @@ void Processor::decode() {
     //check for data hazards
     if(is_forwarded){
         printf("FORWARDING CASE\n"); // debug
-        forward(&if_latch, &id_latch, &ex_latch, &mem_latch);
+        forward(&if_latch, &id_latch, &ex_latch, &mem_latch, &wb_latch);
     }
     else{
         if(mem_latch.instruction != nullptr && !mem_latch.is_stall){
