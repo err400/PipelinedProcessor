@@ -11,7 +11,7 @@ private:
 
 public:
     Registers();
-    uint32_t readRegister(int regNum);
+    int32_t readRegister(int regNum);
     void writeRegister(int regNum, uint32_t value);
 };
 

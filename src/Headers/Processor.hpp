@@ -2,7 +2,6 @@
 #define PROCESSOR_HPP
 
 #include "Basic_Processor.hpp"
-#include "InstructionFile.hpp"
 
 class Processor : public Basic_Processor {
     private:
@@ -15,7 +14,10 @@ class Processor : public Basic_Processor {
     void writeback() override;
 
     public:
-    Processor();
+    Processor(bool is_forward);
+    bool is_forwarded;
+    bool resolveBranch(Instruction instr);
+    void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage, MEMStageData* mem_stage);
 };
 
 

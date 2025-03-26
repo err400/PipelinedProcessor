@@ -6,7 +6,7 @@ Registers::Registers(){
     std::fill(registers.begin(), registers.end(), 0);
 }
 
-uint32_t Registers::readRegister(int regNum){
+int32_t Registers::readRegister(int regNum){
     if (regNum == 0){
         return 0; // Register x0 is hardwired to 0
     }

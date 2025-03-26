@@ -3,8 +3,9 @@
 
 #include <stdint.h>
 #include <vector>
+#include <string>
+using namespace std;
 
-std::vector<uint32_t> instructionMemory; // Empty initially
 
 enum class Instruction_type{
     R_TYPE,
@@ -48,6 +49,7 @@ struct control_signals{
 };
 
 struct Instruction {
+    // int idx;  // debug // index of the instruction in the instructionMemory
     uint32_t raw;
     uint8_t func7;
     uint8_t rs2;
@@ -56,11 +58,16 @@ struct Instruction {
     uint8_t rd;
     uint8_t opcode;
     // no two imm in case of stores
-    uint32_t imm;
+    int32_t imm;
     Instruction_type type;
     control_signals controls;
+    vector<string> vec;
+    string instStr;
 };
 
-void decodeInstruction(Instruction& instr);
+extern std::vector<Instruction> instructionMemory; // Empty initially
+// extern bool is_forwarded;
+
+void decodeInstruction(Instruction* instr);
 
 #endif // INSTRUCTION_H
