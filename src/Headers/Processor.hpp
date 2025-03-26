@@ -14,7 +14,7 @@ class Processor : public Basic_Processor {
     void writeback() override;
 
     public:
-    Processor();
+    Processor(bool is_forward);
     bool resolveBranch(Instruction instr);
     void forward(IDStageData* id_stage, EXStageData* ex_stage, MEMStageData* mem_stage);
 };

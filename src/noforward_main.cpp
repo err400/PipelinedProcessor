@@ -1,0 +1,14 @@
+#include "Headers/Processor.hpp"
+
+int main(int argc, char* argv[]) {
+    const string Filename = argv[1];
+    printf("filename: %s\n", Filename.c_str()); // debug
+    // int cyclecount = stoi(argv[2]); // debug
+    
+    Processor processor(false);
+    processor.loadProgram(Filename.c_str());
+    processor.run();
+    outputStageandCycles(Filename);
+
+    return 0;
+}

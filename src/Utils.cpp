@@ -43,7 +43,7 @@ void outputStageandCycles(const string& filename) {
     // add x6 x5 x10; ;IF;ID;-;-;EX;MEM;WB
     fs::path path_obj(filename);
     string base_filename = path_obj.filename(); 
-    string file_dest = "outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
+    string file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
     ofstream outputFile(file_dest);
     if (!outputFile.is_open()) {
         cerr << "Error: Unable to open file " << file_dest << endl;

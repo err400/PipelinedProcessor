@@ -84,6 +84,7 @@ void Processor::cycle() {
 
 void Processor::fetch() {
     printf("fetch in processor\n"); // debug
+    printf("old_pc: %d, pc: %d\n", old_pc, pc); // debug
     if(id_latch.branch_is_taken_resolved){
         printf("MADE ID LATCH INVALID\n"); // debug
         id_latch.valid = false;
@@ -111,8 +112,14 @@ void Processor::fetch() {
         if_latch.valid = true;
         if_latch.instruction = new_instr;
         if_latch.instruction->vec.back() = "IF";
-        old_pc = pc;
-        pc += 4; // increment the global pc for next instruction // debug
+        if(old_pc == pc){
+            old_pc += 4;
+            pc += 8;
+        }
+        else{
+            old_pc = pc;
+            pc += 4;
+        }
     }
 
     if(if_latch.is_first_stalled){
@@ -141,6 +148,7 @@ void Processor::decode() {
                     pc = id_latch.pc + id_latch.instruction->imm;
                     printf("pc: %d\n",pc);
                     printf("if_latch.pc: %d\n",if_latch.pc);
+                    printf("old_pc: %d\n",old_pc);
                     // kill the next instruction where currently IF is being implemented
                     // id_latch.instruction = nullptr;
                     id_latch.branch_is_taken_resolved = true;
@@ -453,7 +461,7 @@ void Processor::writeback() {
     //update vector of strings with WB
 }
 
-Processor::Processor() {
+Processor::Processor(bool is_forward) {
     cycles = 0;
     is_completed = false;
     pc = 4;
