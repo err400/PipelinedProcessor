@@ -88,12 +88,8 @@ void Processor::fetch() {
         printf("MADE ID LATCH INVALID\n"); // debug
         id_latch.valid = false;
         id_latch.branch_is_taken_resolved = false;
-        printf("came in b/w\n"); // debug
-        // if_latch.pc = id_latch.branch_is_taken_resolved.second;
-        printf("made latch invalid: cycles nowwwww: %d\n", cycles); // debug
     }
     else{
-        // if_latch.pc = pc;
         id_latch.valid = true;
     }
     if(if_latch.num_stall > 0){
@@ -113,10 +109,6 @@ void Processor::fetch() {
         }
         new_instr = getInstruction(if_latch.pc);
         if_latch.valid = true;
-        // id_latch.valid = true;
-        // if(!id_latch.branch_is_taken_resolved){
-        //     id_latch.valid = true;
-        // }
         if_latch.instruction = new_instr;
         if_latch.instruction->vec.back() = "IF";
         old_pc = pc;
@@ -128,13 +120,13 @@ void Processor::fetch() {
         if_latch.is_stall = true;
         if_latch.is_first_stalled = false;
     }
-    
 }
 
 void Processor::decode() {
     printf("decode in processor\n"); // debug
 
     if(!id_latch.valid){
+        ex_latch.valid = false;
         printf("NOTTT VALIDDDD\n"); // debug
         return;
     }
@@ -186,7 +178,6 @@ void Processor::decode() {
     }
 
     id_latch.is_stall = false;
-    printf("if_latch.instruction before decode: %s\n", if_latch.instruction->instStr.c_str()); // debug
     printf("in decode\n"); // debug
     decodeInstruction(if_latch.instruction);
     //check for data hazards
@@ -274,6 +265,7 @@ void Processor::execute() {
     }
     else{
         if(!ex_latch.valid){
+            mem_latch.valid = false;
             return;
         }
         // alu output in the case of jal / jalr
@@ -344,28 +336,7 @@ void Processor::execute() {
                 }
                 break;
         }
-        
-        if(id_latch.instruction->controls.is_jump){
-            // printf("jjjjjjjjjjjjjjjjjjjj\n"); // debug
-            // printf("id_latch.instruction.rd: %d\n", id_latch.instruction->rd); // debug
-            if(id_latch.instruction->opcode == 0x6F) { 
-                // jal
-                printf("id_latch.pc: %d\n", id_latch.pc); // debug
-                printf("id_latch.instruction->imm: %d\n", id_latch.instruction->imm); // debug
-                // update the ra value here
-                registers.writeRegister(id_latch.instruction->rd, id_latch.pc + 4);
-                pc = id_latch.pc + id_latch.instruction->imm;
-                printf("jal pc: %d\n", pc); // debug
-            } 
-            else if(id_latch.instruction->opcode == 0x67) { 
-                // jalr
-                // to make sure the number is even
-                // update the ra value here
-                registers.writeRegister(id_latch.instruction->rd, id_latch.pc + 4);
-                pc = (op1 + id_latch.instruction->imm) & ~1;
-            }
-            ex_latch.is_jump = true;
-        }
+    
         // branches resolved in ID stage
         // set alu_output to register read data in case of sw instruction
         ex_latch.pc=id_latch.pc;
@@ -394,6 +365,7 @@ void Processor::mem() { //debug
         return;
     }
     if(!mem_latch.valid){
+        wb_latch.valid = false;
         return;
     }
     mem_latch.is_stall = false;

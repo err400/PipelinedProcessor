@@ -5,7 +5,6 @@ int main() {
     Processor processor;
     processor.loadProgram(Filename.c_str());
     processor.run();
-
     outputStageandCycles(Filename);
 
     return 0;
