@@ -10,11 +10,11 @@ int main(int argc, char* argv[]) {
 
     const string Filename = argv[1];
     // is_forwarded = true;
-    // int cycleCount = std::stoi(argv[2]);  // debug
+    int cyclecount = std::stoi(argv[2]);  // debug
     Processor processor(true); 
     
     processor.loadProgram(Filename.c_str());
-    processor.run();
+    processor.run(cyclecount);
     outputStageandCycles(Filename);
     return 0;
 }

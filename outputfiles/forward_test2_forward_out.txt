@@ -1,0 +1,3 @@
+lw x5 0 x4          ;  IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+lw x6 0 x5          ;     ;IF ;ID ;-  ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+lw x7 0 x6          ;     ;   ;IF ;i- ;ID ;-  ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;

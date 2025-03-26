@@ -2,18 +2,14 @@
 
 // check for forwarding here
 void Processor::forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage, MEMStageData* mem_stage){
-    printf("FORWARD FUNCTION CALLED\n"); // debug
     // if there is data hazard only in case of lw instruction in ex stage
     if(ex_stage->instruction != nullptr){
         if(ex_stage->instruction->controls.MemtoReg){
-            printf("WILL INCREASE FSTALLS\n"); // debug
             if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
-                printf("TR/////\n"); // debug
                 id_stage->num_stall = 1;
                 if_stage->is_first_stalled = true;
             }
             if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
-                printf("TR/////\n"); // debug
                 id_stage->num_stall = 1;
                 if_stage->is_first_stalled = true;
             }
@@ -29,12 +25,11 @@ void Processor::forward(IFStageData* if_stage, IDStageData* id_stage, EXStageDat
             }
         }
     }
-    
     // mem and ex
     // think of more cases // debug
     // mem and id
-    // lw and beq case
-    // lw in MEM stage
+    // lw and beq case - done
+    // lw in MEM stage - forward
     if(mem_stage->instruction != nullptr){
         if(mem_stage->instruction->controls.MemtoReg){
             if(id_stage->instruction->rs1 == mem_stage->instruction->rd){
@@ -92,8 +87,12 @@ void Processor::cycle() {
 void Processor::fetch() {
     printf("fetch in processor\n"); // debug
     printf("old_pc: %d, pc: %d\n", old_pc, pc); // debug
+    // make if latch invalid when the pc exceeds the instructions in the IM
+    if(!if_latch.valid){
+        id_latch.valid = false;
+        return;
+    }
     if(id_latch.branch_is_taken_resolved){
-        printf("MADE ID LATCH INVALID\n"); // debug
         id_latch.valid = false;
         id_latch.branch_is_taken_resolved = false;
     }
@@ -112,7 +111,7 @@ void Processor::fetch() {
         Instruction* new_instr;
         int n = instructionMemory.size();
         if(if_latch.pc >= 4*n){ // debug
-            is_completed = true;
+            if_latch.valid = false;
             return;
         }
         new_instr = getInstruction(if_latch.pc);
@@ -483,7 +482,7 @@ void Processor::writeback() {
 
 Processor::Processor(bool is_forward) {
     cycles = 0;
-    is_completed = false;
+    // is_completed = false;
     pc = 4;
     is_forwarded = is_forward;
     id_latch.branch_is_taken_resolved = false;
@@ -493,7 +492,8 @@ Processor::Processor(bool is_forward) {
     mem_latch.instruction = nullptr;
     wb_latch.instruction = nullptr;
     if_latch.is_first_stalled = false;
-    if_latch.valid = id_latch.valid = ex_latch.valid = mem_latch.valid = wb_latch.valid = false;
+    if_latch.valid = true;
+    id_latch.valid = ex_latch.valid = mem_latch.valid = wb_latch.valid = false;
     if_latch.is_stall = false;
     id_latch.is_stall = ex_latch.is_stall = mem_latch.is_stall = wb_latch.is_stall = false;
     if_latch.num_stall = id_latch.num_stall = ex_latch.num_stall = mem_latch.num_stall = wb_latch.num_stall = 0;
