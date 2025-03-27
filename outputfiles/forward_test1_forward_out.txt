@@ -1,2 +1,0 @@
-add x4 x5 x6        ;  IF ;ID ;EX ;MEM;
-add x7 x8 x9        ;     ;IF ;ID ;ID ;
