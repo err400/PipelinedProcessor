@@ -1,0 +1,2 @@
+add x8 x7 x6        ;  IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+add x9 x8 x7        ;     ;IF ;ID ;-  ;-  ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
