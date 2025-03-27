@@ -15,7 +15,15 @@ the five stages being Instruction Fetch (IF), Instruction Decode(ID), Execute (E
 # Design Decisions
 
 # Features
-- 4KB data memory
+- 4KB data memory (initialized with random values)
+- ALU operations supported and register values changed accordingly
+- Branches resolved by reading registers in ID stage
+- Appropriate stalls for forwarded and non-forwarded pipeline
+- Instructions supported: 
+    - R type instructions: add,sub,mul,div,and, or etc.   
+    - I type instructions: lw/lb, sw/sb, addi etc
+    - Jump instructions: jal and jalr
+    - Branch instructions: beq, bne, blt, bge
 
 # Assumptions
 ### Register Initialization:
