@@ -19,19 +19,24 @@ the five stages being Instruction Fetch (IF), Instruction Decode(ID), Execute (E
 
 # Assumptions
 ### Register Initialization:
-- We have assumed that all the 32 registers (stored in an array) are initialized with the value 0.
+- We have assumed that all the 32 registers (stored in a vector) are initialized with the value 0.
 - For ALU Operations, we are performing ALU operations (as a real simulator would do) and storing it in appropriate registers.
 
 ### Branch and Jump statements
 - Branch taken and jump statements are resolved in ID stage.
 - For branching instructions (beq,bne,blt,bltu etc), we have assumed that branches will not be taken by default.
-- Branches taken or not will be decided by the relevant register values.
 - If branch is taken, we kill the default instruction that was running and change the PC to the new instruction.
+- Branches taken or not will be decided by the relevant register values.
+
 
 ### Load and Store Instructions
-- We are currently supporting lw, sw instructions
+- We are currently supporting lw, sw instructions. 
+- lw reads the data from the relevant address in Data memory whereas sw writes the data from address in 
 
-### Error handling
+### Data Memory Initialization
+- Data Memory is of 4KB size.
+- Values are assigned randomly in data memory.
+
 
 
 # References and Sources
