@@ -1,7 +1,7 @@
 # Makefile for Pipelined Processor
 
 CXX = g++
-CXXFLAGS = -Wall -std=c++11 -g
+CXXFLAGS = -Wall -std=c++17 -g
 
 # SRC_DIR = src
 HEADERS_DIR = Headers
