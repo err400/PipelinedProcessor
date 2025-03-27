@@ -48,6 +48,7 @@ void Processor::fetch() {
     if(!if_latch.valid){
         if(id_latch.num_stall == 0){
             // make id invalid only after num stalls = 0
+            printf("IN IF STAGE: MAKING ID INVALID\n"); // debug
             id_latch.valid = false;
         }
         return;
@@ -73,6 +74,9 @@ void Processor::fetch() {
         int n = instructionMemory.size();
         if(if_latch.pc >= (unsigned int)4*n){ // debug
             if_latch.valid = false;
+            if(id_latch.num_stall == 0){
+                id_latch.valid = false;
+            }
             return;
         }
         new_instr = getInstruction(if_latch.pc);
@@ -100,6 +104,7 @@ void Processor::decode() {
     printf("decode in processor\n"); // debug
 
     if(!id_latch.valid){
+        printf("ID LATCH IS INVALID\n"); // debug
         ex_latch.valid = false;
         // printf("NOTTT VALIDDDD\n"); // debug
         return;
@@ -269,9 +274,11 @@ void Processor::execute() {
     }
     else{
         if(!ex_latch.valid){
+            printf("EX IS INVALID\n"); // debug
             mem_latch.valid = false;
             return;
         }
+        printf("EX IS VALID\n"); // debug
         // alu output in the case of jal / jalr
         // negative imm // debug
         ex_latch.is_stall = false;
