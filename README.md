@@ -1,4 +1,4 @@
-# RISC-V Simulator Project
+# Pipelined Processor in RISC-V
 ### Authors
 - Laksh Goel (2023CS10848)
 - Yuvika Chaudhary (2023CS10353)
