@@ -1,7 +1,7 @@
-lw x5 0 x1          ;  IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;
-beq x5 x0 12        ;     ;IF ;ID ;-  ;EX ;MEM;WB ;   ;   ;
-add x6 x5 x4        ;     ;   ;IF ;i- ;   ;   ;   ;   ;   ;
-add x7 x6 x5        ;     ;   ;   ;   ;IF ;ID ;EX ;MEM;WB ;
-add x8 x0 x7        ;     ;   ;   ;   ;   ;IF ;ID ;EX ;MEM;
-addi x0 x0 1        ;     ;   ;   ;   ;   ;   ;IF ;ID ;EX ;
-addi x0 x0 1        ;     ;   ;   ;   ;   ;   ;   ;IF ;ID ;
+lw x5 0 x1          ;  IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+beq x5 x0 12        ;     ;IF ;ID ;-  ;-  ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;
+add x6 x5 x4        ;     ;   ;IF ;i- ;i- ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;
+add x7 x6 x5        ;     ;   ;   ;   ;   ;IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;
+add x8 x0 x7        ;     ;   ;   ;   ;   ;   ;IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;   ;
+addi x0 x0 1        ;     ;   ;   ;   ;   ;   ;   ;IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;
+addi x0 x0 1        ;     ;   ;   ;   ;   ;   ;   ;   ;IF ;ID ;ID ;EX ;MEM;WB ;   ;   ;

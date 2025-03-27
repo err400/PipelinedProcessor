@@ -15,6 +15,6 @@ int main(int argc, char* argv[]) {
     
     processor.loadProgram(Filename.c_str());
     processor.run(cyclecount);
-    outputStageandCycles(Filename);
+    outputStageandCycles(Filename,processor.is_forwarded);
     return 0;
 }

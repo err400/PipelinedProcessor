@@ -6,7 +6,7 @@
 #include<iomanip>
 #include <filesystem>
 using namespace std;
-namespace fs = std::__fs::filesystem;
+namespace fs = std::filesystem;
 
 void readMachineCode(const char* fileName) {
     FILE* file = fopen(fileName, "r");
@@ -35,22 +35,22 @@ Instruction* getInstruction(int address) {
     return &(instructionMemory[address / 4]);
 }
 
-void outputStageandCycles(const string& filename) {
+void outputStageandCycles(const string& filename, bool is_forwarded) {
     // make a file in folder outputfiles named filename_noforward_out.txt
     // Use ; as a delimiter between cycles within a line. Thus output corresponding to the first two rows of the
     // nonforwarding processor will look as follows:
     // addi x5 x0 0;IF;ID;EX;MEM;WB
     // add x6 x5 x10; ;IF;ID;-;-;EX;MEM;WB
     fs::path path_obj(filename);
-    string base_filename = path_obj.filename(); 
+    string base_filename = path_obj.filename().string(); 
     string file_dest;
-    // if(is_forwarded){
-    //     file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_forward_out.txt";
-    // }
-    // else{
-    //     file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
-    // }
-    file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
+    if(is_forwarded){
+        file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_forward_out.txt";
+    }
+    else{
+        file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
+    }
+    // file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
     ofstream outputFile(file_dest);
     if (!outputFile.is_open()) {
         cerr << "Error: Unable to open file " << file_dest << endl;
@@ -72,7 +72,6 @@ void outputStageandCycles(const string& filename) {
 }
 
 bool checkDataHazardrs1(Instruction* instruction1, Instruction* instruction2) {
-    int opcode1 = instruction1->opcode;
     // int opcode2 = instruction2.opcode;  // debug
     // sw - no stalls
     if(instruction2->controls.MemWrite){
@@ -94,7 +93,6 @@ bool checkDataHazardrs1(Instruction* instruction1, Instruction* instruction2) {
 }
 
 bool checkDataHazardrs2(Instruction* instruction1, Instruction* instruction2) {
-    int opcode1 = instruction1->opcode;
     // int opcode2 = instruction2.opcode;  // debug
     // sw - no stalls
     if(instruction2->controls.MemWrite){
@@ -112,4 +110,226 @@ bool checkDataHazardrs2(Instruction* instruction1, Instruction* instruction2) {
         return true;
     
     return false;
+}
+
+// check for forwarding here
+void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage, MEMStageData* mem_stage, WBStageData* wb_stage){
+    // if there is data hazard only in case of lw instruction in ex stage
+    // if(ex_stage->instruction != nullptr){
+    //     if(ex_stage->instruction->controls.MemtoReg){
+    //         if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
+    //             id_stage->num_stall = 1;
+    //             if_stage->is_first_stalled = true;
+    //         }
+    //         if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
+    //             id_stage->num_stall = 1;
+    //             if_stage->is_first_stalled = true;
+    //         }
+    //     }
+    //     // ex and id (normal alu instructions in ex)
+    //     else if(ex_stage->instruction->controls.RegWrite){
+    //         if(id_stage->instruction->rs1 == ex_stage->instruction->rd){
+    //             registers.writeRegister(id_stage->instruction->rs1, ex_stage->alu_output);
+    //         }
+    //         if(id_stage->instruction->rs2 == ex_stage->instruction->rd){
+    //             registers.writeRegister(id_stage->instruction->rs2, ex_stage->alu_output);
+
+    //         }
+    //     }
+    // }
+    // // mem and ex
+    // // think of more cases // debug
+    // // mem and id
+    // // lw and beq case - done
+    // // lw in MEM stage - forward
+    // if(mem_stage->instruction != nullptr){
+    //     if(mem_stage->instruction->controls.MemtoReg){
+    //         if(id_stage->instruction->rs1 == mem_stage->instruction->rd){
+    //             registers.writeRegister(mem_stage->instruction->rd, mem_stage->mem_read_data);
+
+    //         }
+    //         if(id_stage->instruction->rs2 == mem_stage->instruction->rd){
+    //             registers.writeRegister(mem_stage->instruction->rd, mem_stage->mem_read_data);
+    //         }
+    //     }
+    // }
+    if(if_stage->instruction->type == Instruction_type::R_TYPE || if_stage->instruction->opcode == 0x13){
+        //check prev instruction
+        if(ex_stage->instruction != nullptr){
+            if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
+                if(ex_stage->instruction->controls.MemRead){
+                    id_stage->num_stall = 1;
+                    if_stage->is_first_stalled = true;
+                    return;
+                } //ex gets data from mem stage (lw followed by add)
+                // lw x5 0(x1)
+                // add x6 x5 x4
+                else{
+                    id_stage->rs1_readdata = ex_stage->alu_output;
+                    return;
+                } //ex gets data from ex stage (add followed by add)
+                // add x5 x4 x3
+                // add x6 x5 x4
+            }
+        }
+        if(mem_stage->instruction != nullptr){
+            if(if_stage->instruction->rs1 == mem_stage->instruction->rd){
+                if(mem_stage->instruction->controls.MemRead){
+                    id_stage->rs1_readdata = mem_stage->mem_read_data;
+                    return;
+                } //ex gets data from mem stage (lw followed by NoOp followed by add)
+                else{
+                    id_stage->rs1_readdata = mem_stage->alu_output; //ex gets data from mem stage (add followed by NoOp followed by add)
+                    return;
+                }
+            }
+        }
+    }
+    else if(if_stage->instruction->type == Instruction_type::R_TYPE){ // pther than immediate types
+        if(ex_stage->instruction != nullptr){
+            if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
+                if(ex_stage->instruction->controls.MemRead){
+                    id_stage->num_stall = 1;
+                    if_stage->is_first_stalled = true;
+                    return;
+                } //ex gets data from mem stage (lw followed by add)
+                else{
+                    id_stage->rs2_readdata = ex_stage->alu_output;
+                    return;
+                } //ex gets data from ex stage (add followed by add)
+            }
+        }
+        if(mem_stage->instruction != nullptr){
+            if(if_stage->instruction->rs2 == mem_stage->instruction->rd){
+                if(mem_stage->instruction->controls.MemRead){
+                    id_stage->rs2_readdata = mem_stage->mem_read_data;
+                    return;
+                } //ex gets data from mem stage (lw followed by NoOp followed by add)
+                else{
+                    id_stage->rs2_readdata = mem_stage->alu_output; //ex gets data from mem stage (add followed by NoOp followed by add)
+                    return;
+                }
+            }
+        }
+    }
+    else if(if_stage->instruction->opcode == 0x03){ //lw
+        if(ex_stage->instruction != nullptr){
+            // add followed by lw
+            if(if_stage->instruction->rs1 == ex_stage->instruction->rd && (ex_stage->instruction->type == Instruction_type::R_TYPE || ex_stage->instruction->opcode == 0x13)){//add and addi type instructions
+                id_stage->rs1_readdata = ex_stage->alu_output; //case of address of lw dependent on output
+                return;
+            }
+            // lw followed by lw
+            else if(if_stage->instruction->rs1 == ex_stage->instruction->rd && ex_stage->instruction->controls.MemRead){
+                id_stage->num_stall = 1;
+                if_stage->is_first_stalled = true;
+                return;
+            }
+        }
+        if(mem_stage->instruction != nullptr){
+            // add followed by noOp followed by lw
+            if(if_stage->instruction->rs1 == mem_stage->instruction->rd && (mem_stage->instruction->type == Instruction_type::R_TYPE || mem_stage->instruction->opcode == 0x13)){
+                id_stage->rs1_readdata = mem_stage->alu_output; //case of address of lw dependent on output
+                return;
+            }
+            // lw followed by noOp followed by lw
+            else if(if_stage->instruction->rs1 == mem_stage->instruction->rd && mem_stage->instruction->controls.MemRead){
+                id_stage->rs1_readdata = mem_stage->mem_read_data;
+                return;
+            }
+        }
+    }
+    else if(if_stage->instruction->opcode == 0x23){ //sw
+        // sw x4 0(x1)
+        //    rs2  rs1
+        // lw followed by sw
+        if(ex_stage->instruction != nullptr){
+            if((if_stage->instruction->rs2 == ex_stage->instruction->rd) && (if_stage->instruction->rs1== ex_stage->instruction->rd) && (ex_stage->instruction->controls.MemRead)){
+                id_stage->num_stall = 2;
+                if_stage->is_first_stalled = true;
+                //no need of data forward, automatically handled by the WB
+                return;
+            }
+            else if(if_stage->instruction->rs1 == ex_stage->instruction->rd && (ex_stage->instruction->controls.MemRead)){//add and addi type instructions
+                id_stage->num_stall = 1;
+                if_stage->is_first_stalled = true;
+                return;
+            }
+            else if(if_stage->instruction->rs2 == ex_stage->instruction->rd && (ex_stage->instruction->controls.MemRead)){//add and addi type instructions
+                //debug mem to mem forwarding
+                return;
+            }
+            // add followed by sw
+            else if(if_stage->instruction->rs1 == ex_stage->instruction->rd && (ex_stage->instruction->type == Instruction_type::R_TYPE || ex_stage->instruction->opcode == 0x13)){
+                id_stage->rs1_readdata = ex_stage->alu_output;
+                return;
+            }
+            else if(if_stage->instruction->rs2 == ex_stage->instruction->rd && (ex_stage->instruction->type == Instruction_type::R_TYPE || ex_stage->instruction->opcode == 0x13)){
+                id_stage->rs2_readdata = ex_stage->alu_output;
+                return;
+            }
+        }
+        if(mem_stage->instruction != nullptr){
+            // lw followed by noOp followed by sw
+            if(if_stage->instruction->rs1 == mem_stage->instruction->rd && (mem_stage->instruction->controls.MemRead)){
+                id_stage->instruction->rs1 = mem_stage->mem_read_data;
+            }
+            else if(if_stage->instruction->rs2 == mem_stage->instruction->rd && (mem_stage->instruction->controls.MemRead)){
+                id_stage->rs2_readdata = mem_stage->mem_read_data;
+            }
+            else if(if_stage->instruction->rs1 == mem_stage->instruction->rd && (mem_stage->instruction->controls.MemRead)){
+                id_stage->rs1_readdata = mem_stage->mem_read_data;
+            }
+            // add followed by noOp followed by sw
+            else if(if_stage->instruction->rs1 == mem_stage->instruction->rd && (mem_stage->instruction->type == Instruction_type::R_TYPE || mem_stage->instruction->opcode == 0x13)){
+                id_stage->rs1_readdata = mem_stage->alu_output;
+            }
+            else if(if_stage->instruction->rs2 == mem_stage->instruction->rd && (mem_stage->instruction->type == Instruction_type::R_TYPE || mem_stage->instruction->opcode == 0x13)){
+                id_stage->rs2_readdata = mem_stage->alu_output;
+            }
+            return;
+        }
+    }
+    else if(if_stage->instruction->opcode == 0x63){ //conditional branches
+        if(ex_stage->instruction != nullptr){
+            //lw followed by beq
+            if(ex_stage->instruction->controls.MemRead){
+                if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
+                    id_stage->num_stall = 2;
+                    if_stage->is_first_stalled = true;
+                }
+                if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
+                    id_stage->num_stall = 2;
+                    if_stage->is_first_stalled = true;
+                }
+            }
+            //add followed by beq
+            else if(ex_stage->instruction->controls.RegWrite){
+                if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
+                    id_stage->num_stall = 1;
+                    if_stage->is_first_stalled = true;
+                }
+                if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
+                    id_stage->num_stall = 1;
+                    if_stage->is_first_stalled = true;
+                }
+            }
+            return;
+        }
+        if(mem_stage->instruction != nullptr){
+            //add followed by noOp by beq
+            if(mem_stage->instruction->controls.RegWrite){
+                //debug
+            }
+            //lw followed by NoOp by beq
+            else if(mem_stage->instruction->controls.MemRead){
+                //debug
+            }
+            return;
+        }
+
+    }
+    else if(if_stage->instruction->opcode == 0x37){ //lui
+        //debug
+    }
 }
