@@ -35,7 +35,7 @@ Instruction* getInstruction(int address) {
     return &(instructionMemory[address / 4]);
 }
 
-void outputStageandCycles(const string& filename) {
+void outputStageandCycles(const string& filename, bool is_forwarded) {
     // make a file in folder outputfiles named filename_noforward_out.txt
     // Use ; as a delimiter between cycles within a line. Thus output corresponding to the first two rows of the
     // nonforwarding processor will look as follows:
@@ -44,13 +44,13 @@ void outputStageandCycles(const string& filename) {
     fs::path path_obj(filename);
     string base_filename = path_obj.filename().string(); 
     string file_dest;
-    // if(is_forwarded){
-    //     file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_forward_out.txt";
-    // }
-    // else{
-    //     file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
-    // }
-    file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
+    if(is_forwarded){
+        file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_forward_out.txt";
+    }
+    else{
+        file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
+    }
+    // file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
     ofstream outputFile(file_dest);
     if (!outputFile.is_open()) {
         cerr << "Error: Unable to open file " << file_dest << endl;

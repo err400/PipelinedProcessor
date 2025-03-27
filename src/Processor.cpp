@@ -2,7 +2,7 @@
 
 void Processor::cycle() {
     // default value in the vector of strings for each instruction
-    for(int i = 0;i<instructionMemory.size();i++){
+    for(int i = 0;i<(int)instructionMemory.size();i++){
         instructionMemory[i].vec.push_back(" ");
     }
     printf("In cycle %d\n", cycles); // debug
@@ -71,7 +71,7 @@ void Processor::fetch() {
         if_latch.pc = old_pc;
         Instruction* new_instr;
         int n = instructionMemory.size();
-        if(if_latch.pc >= 4*n){ // debug
+        if(if_latch.pc >= (unsigned int)4*n){ // debug
             if_latch.valid = false;
             return;
         }
