@@ -13,8 +13,34 @@ the five stages being Instruction Fetch (IF), Instruction Decode(ID), Execute (E
 - Branches should be decided after the ID stage.
 
 # Design Decisions
+### Architectural Choices
+1. Pipeline Stages:
+    - IF: Instruction Fetch
+    - ID: Instruction Decode
+    - EX: Execute
+    - MEM: Memory Access
+    - WB: Write Back
+2. Implemented each pipeline stage as a separate struct to encapsulate stage-specific control signals, inputs, and outputs
+3. Registers: Implemented a vector of 32 registers, each of 32 bit. All registers are initialized to 0.
+4. Memory: Implemented a contiguous 4KB data memory, initialized with random values.
+5. Provided read and write instruction for memory, keeping memory Private.
+6. All the Instructions decoded using bitwise operations in InstrucyionFile.
+### Pipeline Decisions
+#### Data Hazards
+1. Data Hazards are handled in ID stage by checking dependent registers in EX and MEM stages.
+2. If a hazard is detected, the pipeline is stalled until the hazard is resolved.
+#### Control Hazards
+1. Branches resolved in the Instruction Decode (ID) stage using functions `resolveBranch` and `resolveUbranch`.
+2. Default assumption: branches are not taken.
+3. Instruction pipeline is killed and PC updated when branch is taken
+4. Forwarding incorporated using functions `forward` and `forward_Dataflow` which look after possible stalling and forwarding of data.
+#### Other Stage
+1. Stalls are propogated in other stages in proper order using `is_stall` bool. Propagation starts from ID latch.
+2. Memory can be read and written only in MEM stage.
+3. Registers can be written in WB stage.
 
 # Features
+
 - 4KB data memory (initialized with random values)
 - ALU operations supported and register values changed accordingly
 - Branches resolved by reading registers in ID stage
@@ -58,3 +84,5 @@ the five stages being Instruction Fetch (IF), Instruction Decode(ID), Execute (E
         - [Op-codes for R-type instructions (for ALU)](assets/operationsAndFields.png)
         - [Final DataPath and Control](assets/fina_datapath.png)
         - [Control Signals](assets/ControlSignals.png)
+- Op-Code references for various Instructions taken from book and ChatGpt.
+- We took help of Chatgpt to print data in stdout.
