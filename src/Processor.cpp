@@ -280,14 +280,14 @@ void Processor::execute() {
     else{
         // alu output in the case of jal / jalr
         ex_latch.is_stall = false;
-        int32_t op1 = registers.readRegister(id_latch.instruction->rs1);
+        int32_t op1 = id_latch.rs1_readdata;
         int32_t op2;
 
         if(id_latch.instruction->controls.AluSrc){
             op2 = id_latch.instruction->imm;
         }
         else{
-            op2 = registers.readRegister(id_latch.instruction->rs2);
+            op2 = id_latch.rs2_readdata;
         }
 
         
