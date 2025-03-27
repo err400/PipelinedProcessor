@@ -12,6 +12,11 @@ the five stages being Instruction Fetch (IF), Instruction Decode(ID), Execute (E
 - Cycles can be implemented as loop iterations. 
 - Branches should be decided after the ID stage.
 
+# Design Decisions
+
+# Features
+- 4KB data memory
+
 # Assumptions
 ### Register Initialization:
 - We have assumed that all the 32 registers (stored in an array) are initialized with the value 0.
@@ -27,6 +32,7 @@ the five stages being Instruction Fetch (IF), Instruction Decode(ID), Execute (E
 - We are currently supporting lw, sw instructions
 
 ### Error handling
+
 
 # References and Sources
 - [Berkeley Repo](https://github.com/ucb-bar/riscv-sodor/tree/master/src/main/scala/sodor/rv32_5stage)

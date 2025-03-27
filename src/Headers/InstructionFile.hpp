@@ -28,13 +28,8 @@ enum class ALUOp{
     OR,
     AND,
     MUL,
-    // MULH,
-    // MULHSU,
-    // MULHU,
     DIV,
-    // DIVU,
     REM,
-    // REMU
 };
 
 struct control_signals{
@@ -45,19 +40,17 @@ struct control_signals{
     bool MemWrite;
     bool AluSrc;
     bool RegWrite;
-    bool is_jump; // zero // debug
+    bool is_jump; // equivalent to zero signal
 };
 
 struct Instruction {
-    // int idx;  // debug // index of the instruction in the instructionMemory
-    uint32_t raw;
-    uint8_t func7;
-    uint8_t rs2;
-    uint8_t rs1;
-    uint8_t func3;
-    uint8_t rd;
-    uint8_t opcode;
-    // no two imm in case of stores
+    uint32_t raw; //32
+    uint8_t func7; //7
+    uint8_t rs2; //5
+    uint8_t rs1; //5
+    uint8_t func3; //3
+    uint8_t rd; //5
+    uint8_t opcode; //7
     int32_t imm;
     Instruction_type type;
     control_signals controls;
@@ -66,7 +59,6 @@ struct Instruction {
 };
 
 extern std::vector<Instruction> instructionMemory; // Empty initially
-// extern bool is_forwarded;
 
 void decodeInstruction(Instruction* instr);
 

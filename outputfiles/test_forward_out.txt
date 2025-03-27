@@ -1,0 +1,7 @@
+addi x2 x2 -16    ;  IF ;ID ;EX ;MEM;
+slt x5 x9 x18       ;     ;IF ;ID ;EX ;
+beq x6 x0 12        ;     ;   ;IF ;ID ;
+addi x0 x0 0        ;     ;   ;   ;IF ;
+addi x0 x0 0        ;     ;   ;   ;   ;
+addi x0 x0 0        ;     ;   ;   ;   ;
+addi x0 x0 0        ;     ;   ;   ;   ;
