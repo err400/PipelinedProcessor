@@ -298,7 +298,7 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
     else if(if_stage->instruction->opcode == 0x67){ //jalr
         if(ex_stage->instruction != nullptr){
             //add followed by jalr
-            if(if_stage->instruction->type == Instruction_type::R_TYPE || if_stage->instruction->opcode == 0x13){
+            if(ex_stage->instruction->type == Instruction_type::R_TYPE || ex_stage->instruction->opcode == 0x13){
                 if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
                     id_stage->num_stall = 1;
                     if_stage->is_first_stalled = true;
@@ -395,7 +395,7 @@ void forward_Dataflow(IFStageData* if_latch, IDStageData* id_latch, EXStageData*
     else if(id_latch->instruction->opcode == 0x67){ //jalr
         //add followed by jalr
         //add noOp followed by jalr
-        if(id_latch->instruction->type == Instruction_type::R_TYPE || id_latch->instruction->opcode == 0x13){
+        if(mem_latch->instruction->type == Instruction_type::R_TYPE || mem_latch->instruction->opcode == 0x13){
             if(id_latch->instruction->rs1 == mem_latch->instruction->rd){
                 id_latch->rs1_readdata = mem_latch->alu_output;
             }
