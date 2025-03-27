@@ -72,6 +72,7 @@ void outputStageandCycles(const string& filename) {
 }
 
 bool checkDataHazard(Instruction* instruction1, Instruction* instruction2) {
+    /////// CHECK //////
     int opcode1 = instruction1->opcode;
     // int opcode2 = instruction2.opcode;  // debug
     // sw - no stalls

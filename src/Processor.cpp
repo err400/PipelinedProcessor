@@ -144,7 +144,7 @@ void Processor::decode() {
 
     if(!id_latch.valid){
         ex_latch.valid = false;
-        printf("NOTTT VALIDDDD\n"); // debug
+        // printf("NOTTT VALIDDDD\n"); // debug
         return;
     }
     if(id_latch.num_stall > 0){
@@ -162,12 +162,16 @@ void Processor::decode() {
             }
             // now resolve branch if applicable
             if(id_latch.instruction->controls.is_branch){
+                printf("BRANCH FUNCTION\n"); // debug
                 printf("id_latch.pc: %d\n", id_latch.pc); // debug
                 if(resolveBranch(*(id_latch.instruction))){
+                    printf("BRANCH TAKEN\n"); // debug
                     pc = id_latch.pc + id_latch.instruction->imm;
                     printf("pc: %d\n",pc);
                     printf("if_latch.pc: %d\n",if_latch.pc);
                     printf("old_pc: %d\n",old_pc);
+                    old_pc = pc;
+                    pc += 4;
                     // kill the next instruction where currently IF is being implemented
                     // id_latch.instruction = nullptr;
                     id_latch.branch_is_taken_resolved = true;
@@ -186,6 +190,8 @@ void Processor::decode() {
 
                     pc = id_latch.pc + id_latch.instruction->imm;
                     id_latch.branch_is_taken_resolved = true;   
+                    old_pc = pc;
+                    pc += 4;
                     printf("jal pc: %d\n", pc); // debug
                 } 
                 else if(id_latch.instruction->opcode == 0x67) { 
@@ -208,6 +214,11 @@ void Processor::decode() {
     id_latch.is_stall = false;
     printf("in decode\n"); // debug
     decodeInstruction(if_latch.instruction);
+    printf("CHECK FOR RD RS VALUES\n"); // debug
+    printf("checking for.....%s\n", if_latch.instruction->instStr.c_str()); // debug
+    printf("rs1:%d\n",if_latch.instruction->rs1); // debug
+    printf("rs2:%d\n",if_latch.instruction->rs2); // debug
+    printf("rd:%d\n",if_latch.instruction->rd); // debug
     //check for data hazards
     if(is_forwarded){
         printf("FORWARDING CASE\n"); // debug
@@ -215,6 +226,7 @@ void Processor::decode() {
     }
     else{
         if(mem_latch.instruction != nullptr && !mem_latch.is_stall){
+            printf("mem_latch.instruction (CHECKING HAZARD): %s\n", mem_latch.instruction->instStr.c_str()); // debug
             if(checkDataHazard(if_latch.instruction, mem_latch.instruction)){
                 // propogate the stalls
                 if_latch.is_first_stalled = true;
@@ -224,6 +236,7 @@ void Processor::decode() {
         }
 
         if(ex_latch.instruction != nullptr && !ex_latch.is_stall){
+            printf("ex_latch.instruction (CHECKING HAZARD): %s\n", ex_latch.instruction->instStr.c_str()); // debug
             if(checkDataHazard(if_latch.instruction, ex_latch.instruction)){
                 // propogate the stalls
                 if_latch.is_first_stalled = true;
@@ -257,6 +270,8 @@ void Processor::decode() {
         if(if_latch.instruction->controls.is_jump){
             if(if_latch.instruction->opcode == 0x6F) { 
                 // jal
+                printf("JJJJJJJJJ\n"); // debug
+                printf("if_latch.instruction: %s\n", if_latch.instruction->instStr.c_str()); // debug
                 printf("id_latch.pc: %d\n", if_latch.pc); // debug
                 printf("id_latch.instruction->imm: %d\n", if_latch.instruction->imm); // debug
                 // update the ra value here
