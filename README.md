@@ -1,16 +1,13 @@
+# RISC-V Simulator Project
+### Authors
+- Laksh Goel (2023CS10848)
+- Yuvika Chaudhary (2023CS10353)
 # Overview
 We will implement our own RISC-V simulator. The processor will have two variants:
 - 5 stage pipelined processor with no forwarding
 - 5 stage pipelined processor with forwarding, 
 the five stages being Instruction Fetch (IF), Instruction Decode(ID), Execute (EX), Memory operations (MEM) and WriteBack (WB)
 
-# Basic Instructions:
-- The 32 registers can be a data structure. 
-- The control signals, input and output for each pipeline stage can be implemented as a struct, 
-- with a separate function to implement the working of the stage. 
-- The function for EX stage can have support for some basic ALU operations (to support the examples mentioned in next section). 
-- Cycles can be implemented as loop iterations. 
-- Branches should be decided after the ID stage.
 
 # Design Decisions
 ### Architectural Choices
