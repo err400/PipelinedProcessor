@@ -162,10 +162,14 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
                     if_stage->is_first_stalled = true;
                     return;
                 } //ex gets data from mem stage (lw followed by add)
+                // lw x5 0(x1)
+                // add x6 x5 x4
                 else{
                     id_stage->rs1_readdata = ex_stage->alu_output;
                     return;
                 } //ex gets data from ex stage (add followed by add)
+                // add x5 x4 x3
+                // add x6 x5 x4
             }
         }
         if(mem_stage->instruction != nullptr){
@@ -235,12 +239,18 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
             }
         }
     }
-    else if(if_stage->instruction->opcode == 0x23){
+    else if(if_stage->instruction->opcode == 0x23){ //sw
         // sw x4 0(x1)
         //    rs2  rs1
         // lw followed by sw
         if(ex_stage->instruction != nullptr){
-            if(if_stage->instruction->rs1 == ex_stage->instruction->rd && (ex_stage->instruction->controls.MemRead)){//add and addi type instructions
+            if((if_stage->instruction->rs2 == ex_stage->instruction->rd) && (if_stage->instruction->rs1== ex_stage->instruction->rd) && (ex_stage->instruction->controls.MemRead)){
+                id_stage->num_stall = 2;
+                if_stage->is_first_stalled = true;
+                //no need of data forward, automatically handled by the WB
+                return;
+            }
+            else if(if_stage->instruction->rs1 == ex_stage->instruction->rd && (ex_stage->instruction->controls.MemRead)){//add and addi type instructions
                 id_stage->num_stall = 1;
                 if_stage->is_first_stalled = true;
                 return;
@@ -262,8 +272,7 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
         if(mem_stage->instruction != nullptr){
             // lw followed by noOp followed by sw
             if(if_stage->instruction->rs1 == mem_stage->instruction->rd && (mem_stage->instruction->controls.MemRead)){
-                id_stage->num_stall = 1;
-                if_stage->is_first_stalled = true;
+                id_stage->instruction->rs1 = mem_stage->mem_read_data;
             }
             else if(if_stage->instruction->rs2 == mem_stage->instruction->rd && (mem_stage->instruction->controls.MemRead)){
                 id_stage->rs2_readdata = mem_stage->mem_read_data;
