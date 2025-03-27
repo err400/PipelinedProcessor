@@ -12,6 +12,22 @@ the five stages being Instruction Fetch (IF), Instruction Decode(ID), Execute (E
 - Cycles can be implemented as loop iterations. 
 - Branches should be decided after the ID stage.
 
+# Assumptions
+### Register Initialization:
+- We have assumed that all the 32 registers (stored in an array) are initialized with the value 0.
+- For ALU Operations, we are performing ALU operations (as a real simulator would do) and storing it in appropriate registers.
+
+### Branch and Jump statements
+- Branch taken and jump statements are resolved in ID stage.
+- For branching instructions (beq,bne,blt,bltu etc), we have assumed that branches will not be taken by default.
+- Branches taken or not will be decided by the relevant register values.
+- If branch is taken, we kill the default instruction that was running and change the PC to the new instruction.
+
+### Load and Store Instructions
+- We are currently supporting lw, sw instructions
+
+### Error handling
+
 # References and Sources
 - [Berkeley Repo](https://github.com/ucb-bar/riscv-sodor/tree/master/src/main/scala/sodor/rv32_5stage)
 - [C++ to RISC-V examples](https://marz.utk.edu/my-courses/cosc230/book/example-risc-v-assembly-programs/)
