@@ -295,6 +295,36 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
     else if(if_stage->instruction->opcode == 0x37){ //lui
         //debug
     }
+    else if(if_stage->instruction->opcode == 0x67){ //jalr
+        //add followed by jalr
+        if(if_stage->instruction->type == Instruction_type::R_TYPE || if_stage->instruction->opcode == 0x13){
+            if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
+                id_stage->num_stall = 1;
+                if_stage->is_first_stalled = true;
+                id_stage->is_stall = true;
+            }
+        }
+        //add noOp followed by jalr
+        //continue
+
+        //lw followed by jalr
+        else if(ex_stage->instruction->controls.MemRead){
+            if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
+                id_stage->num_stall = 3;
+                if_stage->is_first_stalled = true;
+                id_stage->is_stall = true;
+            }
+        }
+        //lw noOp jalr
+        else if(mem_stage->instruction->controls.MemRead){
+            if(if_stage->instruction->rs1 == mem_stage->instruction->rd){
+                id_stage->num_stall = 2;
+                if_stage->is_first_stalled = true;
+                id_stage->is_stall = true;
+            }
+        }
+
+    }
 }
 
 
@@ -357,5 +387,27 @@ void forward_Dataflow(IFStageData* if_latch, IDStageData* id_latch, EXStageData*
                 id_latch->rs2_readdata = mem_latch->alu_output;
             }
         }
+    }
+    else if(id_latch->instruction->opcode == 0x67){ //jalr
+        //add followed by jalr
+        //add noOp followed by jalr
+        if(id_latch->instruction->type == Instruction_type::R_TYPE || id_latch->instruction->opcode == 0x13){
+            if(id_latch->instruction->rs1 == mem_latch->instruction->rd){
+                id_latch->rs1_readdata = mem_latch->alu_output;
+            }
+        }
+        //lw followed by jalr
+        else if(wb_latch->instruction->controls.MemRead){
+            if(id_latch->instruction->rs1 == wb_latch->instruction->rd){
+                id_latch->rs1_readdata = wb_latch->write_data;
+            }
+        }
+        //lw noOp jalr
+        else if(mem_latch->instruction->controls.MemRead){
+            if(id_latch->instruction->rs1 == mem_latch->instruction->rd){
+                id_latch->rs1_readdata = mem_latch->mem_read_data;
+            }
+        }
+
     }
 }
