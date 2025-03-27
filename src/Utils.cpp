@@ -106,6 +106,7 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
                 if(ex_stage->instruction->controls.MemRead){
                     id_stage->num_stall = 1;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                     return;
                 } //ex gets data from mem stage (lw followed by add)
                 // lw x5 0(x1)
@@ -137,6 +138,7 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
                 if(ex_stage->instruction->controls.MemRead){
                     id_stage->num_stall = 1;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                     return;
                 } //ex gets data from mem stage (lw followed by add)
                 else{
@@ -169,6 +171,7 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
             else if(if_stage->instruction->rs1 == ex_stage->instruction->rd && ex_stage->instruction->controls.MemRead){
                 id_stage->num_stall = 1;
                 if_stage->is_first_stalled = true;
+                id_stage->is_stall = true;
                 return;
             }
         }
@@ -193,11 +196,13 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
             if((if_stage->instruction->rs2 == ex_stage->instruction->rd) && (if_stage->instruction->rs1== ex_stage->instruction->rd) && (ex_stage->instruction->controls.MemRead)){
                 id_stage->num_stall = 2;
                 if_stage->is_first_stalled = true;
+                id_stage->is_stall = true;
                 return;
             }
             else if(if_stage->instruction->rs1 == ex_stage->instruction->rd && (ex_stage->instruction->controls.MemRead)){//add and addi type instructions
                 id_stage->num_stall = 1;
                 if_stage->is_first_stalled = true;
+                id_stage->is_stall = true;
                 return;
             }
             else if(if_stage->instruction->rs2 == ex_stage->instruction->rd && (ex_stage->instruction->controls.MemRead)){//add and addi type instructions
@@ -242,10 +247,12 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
                 if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
                     id_stage->num_stall = 2;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                 }
                 if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
                     id_stage->num_stall = 2;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                 }
             }
             //add followed by beq
@@ -253,10 +260,12 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
                 if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
                     id_stage->num_stall = 1;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                 }
                 if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
                     id_stage->num_stall = 1;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                 }
             }
             return;
@@ -271,10 +280,12 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
                 if(if_stage->instruction->rs1 == mem_stage->instruction->rd){
                     id_stage->num_stall = 1;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                 }
                 if(if_stage->instruction->rs2 == mem_stage->instruction->rd){
                     id_stage->num_stall = 1;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                 }
             }
             return;

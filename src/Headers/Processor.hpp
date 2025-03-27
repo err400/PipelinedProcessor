@@ -15,7 +15,8 @@ class Processor : public Basic_Processor {
 
     public:
     Processor(bool is_forward);
-    bool resolveBranch(Instruction instr);
+    bool resolveBranch(Instruction instr, int v1, int v2);
+    bool resolveUBranch(bool after_stall);
 };
 
 

@@ -12,32 +12,83 @@ void Processor::cycle() {
     fetch();
 }
 
-bool Processor::resolveBranch(Instruction instr){
-    // read reg values
-    int32_t rs1_data = registers.readRegister(instr.rs1);
-    int32_t rs2_data = registers.readRegister(instr.rs2);
+bool Processor::resolveBranch(Instruction instr, int v1, int v2){
     bool branch_taken = false;
     switch(instr.func3){
         case 0x0: // beq
-            branch_taken = (rs1_data == rs2_data);
+            branch_taken = (v1 == v2);
             break;
         case 0x1: // bne
-            branch_taken = (rs1_data != rs2_data);
+            branch_taken = (v1 != v2);
             break;
         case 0x4: // blt
-            branch_taken = (rs1_data < rs2_data);
+            branch_taken = (v1 < v2);
             break;
         case 0x5: // bge
-            branch_taken = (rs1_data >= rs2_data);
+            branch_taken = (v1 >= v2);
             break;
         case 0x6: // bltu
-            branch_taken = (rs1_data < rs2_data);
+            branch_taken = (v1 < v2);
             break;
         case 0x7: // bgeu
-            branch_taken = (rs1_data >= rs2_data);
+            branch_taken = (v1 >= v2);
             break;
     }
     return branch_taken;
+}
+
+bool Processor::resolveUBranch(bool after_stall){
+    if(after_stall){
+        if(id_latch.instruction->opcode == 0x6F) {
+            if(id_latch.instruction->imm == 4){
+                return false;
+            } 
+            // jal
+            // update the ra value here
+            registers.writeRegister(id_latch.instruction->rd, id_latch.pc + 4); //ra pc+4 saved
+            pc = id_latch.pc + id_latch.instruction->imm;
+            return true;
+        }
+        else if(id_latch.instruction->opcode == 0x67) { 
+            if(id_latch.instruction->imm == 4){
+                return false;
+            }
+            // jalr
+            // to make sure the number is even
+            // update the ra value here
+            int32_t op1 = registers.readRegister(id_latch.instruction->rs1);
+            registers.writeRegister(id_latch.instruction->rd, id_latch.pc + 4);
+            pc = (op1 + id_latch.instruction->imm) & ~1;
+            return true;
+        }
+        ex_latch.is_jump = true; //debug important
+    }
+    else{
+        if(if_latch.instruction->opcode == 0x6F) {
+            if(if_latch.instruction->imm == 4){
+                return false;
+            }
+            // jal
+            // update the ra value here
+            registers.writeRegister(if_latch.instruction->rd, if_latch.pc + 4); //ra pc+4 saved
+            pc = if_latch.pc + if_latch.instruction->imm;
+            return true;
+        }
+        else if(if_latch.instruction->opcode == 0x67) {
+            if(if_latch.instruction->imm == 4){
+                return false;
+            }
+            // jalr
+            // to make sure the number is even
+            // update the ra value here
+            int32_t op1 = registers.readRegister(if_latch.instruction->rs1);
+            registers.writeRegister(if_latch.instruction->rd, if_latch.pc + 4);
+            pc = (op1 + if_latch.instruction->imm) & ~1;
+            return true;
+        }
+        ex_latch.is_jump = true; //debug important
+    }
+    return false;
 }
 
 void Processor::fetch() {
@@ -49,8 +100,6 @@ void Processor::fetch() {
         }
         return;
     }
-
-
     if(id_latch.branch_is_taken_resolved){
         // to kill the instruction in case of branch taken
         id_latch.valid = false;
@@ -59,33 +108,28 @@ void Processor::fetch() {
     else{
         id_latch.valid = true; // after jump
     }
-
-
     if(if_latch.num_stall > 0){
         // push - in the instruction vector of strings
-        if_latch.instruction->vec.back() = "-";
+        if_latch.instruction->vec.back() = "-"; // debug
         if_latch.num_stall--;
         return;
     }
     else{
         if_latch.is_stall = false;
         if_latch.pc = old_pc;
-
+        Instruction* new_instr;
         int n = instructionMemory.size();
-        if(if_latch.pc >= (unsigned int)4*n){
+        if(if_latch.pc >= (unsigned int)4*n){ // debug
             if_latch.valid = false;
+            if(id_latch.num_stall == 0){
+                id_latch.valid = false;
+            }
             return;
         }
-        //If not out of memory bound, push IF
-        if_latch.instruction->vec.back() = "IF";
-
-        
-        Instruction* new_instr = getInstruction(if_latch.pc);
+        new_instr = getInstruction(if_latch.pc);
+        // if_latch.valid = true;   // debug - isko baad me hataya hai
         if_latch.instruction = new_instr;
-        
-        //beq x12 x0 8
-        //add x5 x4 x3
-        //old_pc = 8 and pc = 8, but I want to go to next instruction
+        if_latch.instruction->vec.back() = "IF";
         if(old_pc == pc){
             old_pc += 4;
             pc += 8;
@@ -115,18 +159,16 @@ void Processor::decode() {
         id_latch.num_stall--;
 
         if(id_latch.num_stall == 0){
-            if(is_forwarded){
-                // lw came in MEM stage now - read from MEM and resolve branch
-                if(id_latch.instruction->rs1 == mem_latch.instruction->rd){
-                    registers.writeRegister(mem_latch.instruction->rd, mem_latch.mem_read_data);
-                }
-                if(id_latch.instruction->rs2 == mem_latch.instruction->rd){
-                    registers.writeRegister(mem_latch.instruction->rd, mem_latch.mem_read_data);
-                }
-            }
-            // now resolve branch if applicable
+            //flow Data
+            if(is_forwarded)
+                forward_Dataflow(&if_latch, &id_latch, &ex_latch, &mem_latch, &wb_latch, &registers);
+            //No data hazard check as already stalled
+            // Conditional Branch
             if(id_latch.instruction->controls.is_branch){
-                if(resolveBranch(*(id_latch.instruction))){
+                if(resolveBranch(*(id_latch.instruction), id_latch.rs1_readdata, id_latch.rs2_readdata)){
+                    if(id_latch.instruction->imm == 4){
+                        return;
+                    }
                     pc = id_latch.pc + id_latch.instruction->imm;
                     old_pc = pc;
                     pc += 4;
@@ -134,30 +176,13 @@ void Processor::decode() {
                     id_latch.branch_is_taken_resolved = true;
                 }
             }
-            // jump instruction
+            // Unconditional Branch
             if(id_latch.instruction->controls.is_jump){
-                if(id_latch.instruction->opcode == 0x6F) { 
-                    // jal
-                    // update the ra value here
-                    registers.writeRegister(id_latch.instruction->rd, id_latch.pc + 4);
-    
-                    pc = id_latch.pc + id_latch.instruction->imm;
-                    id_latch.branch_is_taken_resolved = true;   
-                    old_pc = pc;
-                    pc += 4;
-                } 
-                else if(id_latch.instruction->opcode == 0x67) { 
-                    // jalr
-                    // to make sure the number is even
-                    // update the ra value here
-                    registers.writeRegister(id_latch.instruction->rd, id_latch.pc + 4);
-                    int32_t op1 = registers.readRegister(id_latch.instruction->rs1);
-                    old_pc = pc;
-                    pc += 4;
-                    pc = (op1 + id_latch.instruction->imm) & ~1;
+                if(resolveUBranch(true)){
                     id_latch.branch_is_taken_resolved = true;
+                    old_pc = pc;
+                    pc += 4;
                 }
-                ex_latch.is_jump = true; //debug Importnat
             }
         }
         return;
@@ -191,35 +216,23 @@ void Processor::decode() {
         
     }
     
-    //Control Hazards
-    //Neither Forwarding, nor Stalling
-    if(!id_latch.is_stall && !is_forwarded){ //debug
+    //Control Hazards in case of no stalling
+    if(!id_latch.is_stall){
         //Conditional Branch
         if(if_latch.instruction->controls.is_branch){
-            if(resolveBranch(*(if_latch.instruction))){
+            if(resolveBranch(*(if_latch.instruction), registers.readRegister(if_latch.instruction->rs1), registers.readRegister(if_latch.instruction->rs2))){
+                if(if_latch.instruction->imm == 4){
+                    return;
+                } 
                 pc = if_latch.pc + if_latch.instruction->imm;
                 id_latch.branch_is_taken_resolved = true;
             }
         }
         //Unconditional Branch
         if(if_latch.instruction->controls.is_jump){
-            if(if_latch.instruction->opcode == 0x6F) { 
-                // jal
-                // update the ra value here
-                registers.writeRegister(if_latch.instruction->rd, if_latch.pc + 4); //pc+4 saved
-                id_latch.branch_is_taken_resolved = true;
-                pc = if_latch.pc + if_latch.instruction->imm;
+            if(resolveUBranch(false)){
+                id_latch.branch_is_taken_resolved=true;
             }
-            else if(if_latch.instruction->opcode == 0x67) { 
-                // jalr
-                // to make sure the number is even
-                // update the ra value here
-                int32_t op1 = registers.readRegister(if_latch.instruction->rs1);
-                registers.writeRegister(if_latch.instruction->rd, if_latch.pc + 4);
-                id_latch.branch_is_taken_resolved = true;
-                pc = (op1 + if_latch.instruction->imm) & ~1;
-            }
-            ex_latch.is_jump = true; //debug important
         }
     }
 
@@ -228,6 +241,10 @@ void Processor::decode() {
     id_latch.instruction->vec.back() = "ID";
     id_latch.pc = if_latch.pc;
     ex_latch.valid = true;
+    id_latch.rs1_readdata = registers.readRegister(id_latch.instruction->rs1);
+    if(id_latch.instruction->type == Instruction_type::R_TYPE || id_latch.instruction->type == Instruction_type::S_TYPE || id_latch.instruction->type == Instruction_type:: SB_TYPE){
+        id_latch.rs2_readdata = registers.readRegister(id_latch.instruction->rs1);
+    }
 }
 
 void Processor::execute() {
@@ -415,9 +432,11 @@ void Processor::writeback() {
     }
 
     //store data in wb_latch
+    wb_latch.instruction = mem_latch.instruction;
+    wb_latch.write_register = mem_latch.instruction->rd;
     wb_latch.pc=mem_latch.pc; //No need, but a standard practice
     mem_latch.instruction->vec.back() = "WB";
-    wb_latch.write_data = mem_latch.alu_output;
+    wb_latch.write_data = mem_latch.mem_read_data;
 }
 
 Processor::Processor(bool is_forward) {

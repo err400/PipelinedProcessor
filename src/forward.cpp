@@ -9,7 +9,6 @@ int main(int argc, char* argv[]) {
     }
 
     const string Filename = argv[1];
-    // is_forwarded = true;
     int cyclecount = std::stoi(argv[2]);  // debug
     Processor processor(true); 
     
