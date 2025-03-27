@@ -12,6 +12,11 @@ the five stages being Instruction Fetch (IF), Instruction Decode(ID), Execute (E
 - Cycles can be implemented as loop iterations. 
 - Branches should be decided after the ID stage.
 
+# Design Decisions
+
+# Features
+- 4KB data memory
+
 # References and Sources
 - [Berkeley Repo](https://github.com/ucb-bar/riscv-sodor/tree/master/src/main/scala/sodor/rv32_5stage)
 - [C++ to RISC-V examples](https://marz.utk.edu/my-courses/cosc230/book/example-risc-v-assembly-programs/)

@@ -21,7 +21,6 @@ class Basic_Processor {
         uint32_t old_pc = 0;
 
         int cycles;
-        // bool is_completed;
         protected:
         virtual void cycle() = 0;
 
@@ -32,7 +31,7 @@ class Basic_Processor {
         virtual void writeback() = 0;
     
     public:
-        // Basic_Processor(); // debug
+        bool is_forwarded;
         void run(int cyclecount);
         void loadProgram(const char* filename);
 
