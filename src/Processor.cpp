@@ -96,7 +96,6 @@ void Processor::fetch() {
     if(!if_latch.valid){
         if(id_latch.num_stall == 0){
             // make id invalid only after num stalls = 0
-            printf("IN IF STAGE: MAKING ID INVALID\n"); // debug
             id_latch.valid = false;
         }
         return;
@@ -150,7 +149,6 @@ void Processor::fetch() {
 
 void Processor::decode() {
     if(!id_latch.valid){
-        printf("ID LATCH IS INVALID\n"); // debug
         ex_latch.valid = false;
         //To terminate the Pipeline, propagate valid = false
         return;
