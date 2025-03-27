@@ -71,7 +71,7 @@ void outputStageandCycles(const string& filename) {
 
 }
 
-bool checkDataHazard(Instruction* instruction1, Instruction* instruction2) {
+bool checkDataHazardrs1(Instruction* instruction1, Instruction* instruction2) {
     int opcode1 = instruction1->opcode;
     // int opcode2 = instruction2.opcode;  // debug
     // sw - no stalls
@@ -79,15 +79,36 @@ bool checkDataHazard(Instruction* instruction1, Instruction* instruction2) {
         return false;
     }
     // Check if instruction1 is a JAL,LUI or AUIPC
-    if (opcode1 == 0b1101111 || opcode1 ==0b0110111 || opcode1==0b0010111)
-        return false;
+    if (instruction1->type == Instruction_type::UJ_TYPE || instruction1->type == Instruction_type::U_TYPE)
+        return false; // no rs1
+    if (instruction2->type == Instruction_type::S_TYPE || instruction2->type == Instruction_type::SB_TYPE)
+        return false; // no rd
     int rs1 = instruction1->rs1;
-    int rs2 = instruction1->rs2;
     printf("rs1: %d\n", rs1); // debug
     int rd = instruction2->rd;
-    printf("rs1: %d, rs2: %d, rd: %d\n", rs1, rs2, rd); // debug
     
-    if (rs1 == rd || rs2 == rd)
+    if (rs1 == rd)
+        return true;
+    
+    return false;
+}
+
+bool checkDataHazardrs2(Instruction* instruction1, Instruction* instruction2) {
+    int opcode1 = instruction1->opcode;
+    // int opcode2 = instruction2.opcode;  // debug
+    // sw - no stalls
+    if(instruction2->controls.MemWrite){
+        return false;
+    }
+    // Check if instruction1 is a JAL,LUI or AUIPC, no Immediates
+    if (instruction1->type == Instruction_type::UJ_TYPE || instruction1->type == Instruction_type::U_TYPE || instruction1->type == Instruction_type::I_TYPE) 
+        return false; // no rs2
+    if (instruction2->type == Instruction_type::S_TYPE || instruction2->type == Instruction_type::SB_TYPE)
+        return false; //no rd
+    int rs2 = instruction1->rs2;
+    int rd = instruction2->rd;
+    
+    if (rs2 == rd)
         return true;
     
     return false;
