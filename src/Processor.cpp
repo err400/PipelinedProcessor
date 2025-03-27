@@ -316,7 +316,7 @@ void Processor::decode() {
                 // propogate the stalls
                 if_latch.is_first_stalled = true;
                 id_latch.is_stall = true;
-                id_latch.num_stall = 1;
+                id_latch.num_stall = 2;
             }
         }
         if(mem_latch.instruction != nullptr && !mem_latch.is_stall){
