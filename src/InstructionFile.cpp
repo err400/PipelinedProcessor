@@ -88,7 +88,7 @@ void decodeInstruction(Instruction* instr){
     else if(instr->opcode == 0x13){
         // addi slli slti sltiu xori srli srai ori andi
         instr->type = Instruction_type::I_TYPE;
-        instr->imm = ((int32_t)(instr->raw >> 20) << 20) >> 20; // debug
+        instr->imm = ((int32_t)(instr->raw >> 20) << 20) >> 20;
         instr->controls.AluSrc = true;
         instr->controls.RegWrite = true;
         if(instr->func3 == 0x0) {
@@ -155,7 +155,6 @@ void decodeInstruction(Instruction* instr){
         uint32_t imm = (imm12 << 12) | (imm11 << 11) | (imm10_5 << 5) | (imm4_1 << 1);
         instr->imm = ((int32_t)(imm << 19)) >> 19;
         instr->controls.is_branch = true;
-        // instr->controls.AluSrc = true;  // pc + offset  // debug
         if(instr->func3 == 0x0) {
             instr->controls.AluOp = ALUOp::SUB; // beq uses SUB for comparison
         } 

@@ -5,8 +5,7 @@
 #include "InstructionFile.hpp"
 
 struct IFStageData {
-    // uint32_t old_pc; // initialize to 0
-    uint32_t pc;    // initialize to 4
+    uint32_t pc;
     bool is_first_stalled; // since id and ex will always be executed together
     Instruction* instruction;
     int num_stall;
@@ -15,7 +14,7 @@ struct IFStageData {
 };
 
 struct IDStageData {
-    Instruction* instruction; //Different instruction in each stage
+    Instruction* instruction;
     //Instruction passed for control signals
     uint32_t pc;
     bool branch_is_taken_resolved;
@@ -31,11 +30,11 @@ struct IDStageData {
 };
 
 struct EXStageData {
-    Instruction* instruction; //Different instruction in each stage
+    Instruction* instruction;
     uint32_t pc;
     uint32_t zero;
-    int32_t alu_output; // debug
-    uint32_t rs2_value; // Value to write in memory if applicable
+    int32_t alu_output;
+    uint32_t memory_value; // Value to write in memory if applicable
     bool is_jump;
     int num_stall;
     bool is_stall;
@@ -44,17 +43,17 @@ struct EXStageData {
 
 // sw x4 0(x1)
 struct MEMStageData {
-    Instruction* instruction; //Different instruction in each stage
+    Instruction* instruction;
     uint32_t pc;
     uint32_t mem_read_data;
-    int32_t alu_output; // can be the address where to write
+    int32_t alu_output; // Can be value to write // can be the address where to write //Also used in forwarding
     int num_stall;
     bool is_stall;
     bool valid;
 };
 
 struct WBStageData {
-    Instruction* instruction; //Different instruction in each stage
+    Instruction* instruction;
     uint32_t pc;
     uint32_t write_data;
     uint8_t write_register;
