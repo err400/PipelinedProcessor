@@ -82,19 +82,59 @@ void Processor::forward(IFStageData* if_stage, IDStageData* id_stage, EXStageDat
     }
     else if(if_stage->instruction->opcode == 0x03){ //lw
         // add followed by lw
+        if(if_stage->instruction->rs1 == ex_stage->instruction->rd && (ex_stage->instruction->type == Instruction_type::R_TYPE || ex_stage->instruction->opcode == 0x13)){//add and addi type instructions
+            id_stage->rs1_readdata = ex_stage->alu_output; //case of address of lw dependent on output
+        }
         // add followed by noOp followed by lw
-        // sw followed by lw
-        // sw followed by noOp followed by lw
+        else if(if_stage->instruction->rs1 == mem_stage->instruction->rd && (ex_stage->instruction->type == Instruction_type::R_TYPE || ex_stage->instruction->opcode == 0x13)){
+            id_stage->rs1_readdata = mem_stage->alu_output; //case of address of lw dependent on output
+        }
         // lw followed by lw
+        else if(if_stage->instruction->rs1 == ex_stage->instruction->rd && ex_stage->instruction->controls.MemRead){
+            id_stage->num_stall = 1;
+            if_stage->is_first_stalled = true;
+        }
         // lw followed by noOp followed by lw
+        else if(if_stage->instruction->rs1 == mem_stage->instruction->rd && mem_stage->instruction->controls.MemRead){
+            id_stage->rs1_readdata = mem_stage->mem_read_data;
+        }
     }
-    else if(if_stage->instruction->opcode == 0x23){ //sw
-        // sw followed by sw
-        // sw followed by noOp followed by sw
+    else if(if_stage->instruction->opcode == 0x23){
+        // sw x4 0(x1)
+        //    rs2  rs1
         // lw followed by sw
+        if(if_stage->instruction->rs1 == ex_stage->instruction->rd && (ex_stage->instruction->controls.MemRead)){//add and addi type instructions
+            id_stage->num_stall = 1;
+            if_stage->is_first_stalled = true;
+        }
+        else if(if_stage->instruction->rs2 == ex_stage->instruction->rd && (ex_stage->instruction->controls.MemRead)){//add and addi type instructions
+            //debug mem to mem forwarding
+        }
         // lw followed by noOp followed by sw
+        else if(if_stage->instruction->rs1 == mem_stage->instruction->rd && (mem_stage->instruction->controls.MemRead)){
+            id_stage->num_stall = 1;
+            if_stage->is_first_stalled = true;
+        }
+        else if(if_stage->instruction->rs2 == mem_stage->instruction->rd && (mem_stage->instruction->controls.MemRead)){
+            id_stage->rs2_readdata = mem_stage->mem_read_data;
+        }
+        else if(if_stage->instruction->rs1 == mem_stage->instruction->rd && (mem_stage->instruction->controls.MemRead)){
+            id_stage->rs1_readdata = mem_stage->mem_read_data;
+        }
         // add followed by sw
+        else if(if_stage->instruction->rs1 == ex_stage->instruction->rd && (ex_stage->instruction->type == Instruction_type::R_TYPE || ex_stage->instruction->opcode == 0x13)){
+            id_stage->rs1_readdata = ex_stage->alu_output;
+        }
+        else if(if_stage->instruction->rs2 == ex_stage->instruction->rd && (ex_stage->instruction->type == Instruction_type::R_TYPE || ex_stage->instruction->opcode == 0x13)){
+            id_stage->rs2_readdata = ex_stage->alu_output;
+        }
         // add followed by noOp followed by sw
+        else if(if_stage->instruction->rs1 == mem_stage->instruction->rd && (mem_stage->instruction->type == Instruction_type::R_TYPE || mem_stage->instruction->opcode == 0x13)){
+            id_stage->rs1_readdata = mem_stage->alu_output;
+        }
+        else if(if_stage->instruction->rs2 == mem_stage->instruction->rd && (mem_stage->instruction->type == Instruction_type::R_TYPE || mem_stage->instruction->opcode == 0x13)){
+            id_stage->rs2_readdata = mem_stage->alu_output;
+        }
     }
     else if(if_stage->instruction->opcode == 0x63){ //conditional branches
         //lw followed by beq
@@ -130,7 +170,7 @@ void Processor::forward(IFStageData* if_stage, IDStageData* id_stage, EXStageDat
 
     }
     else if(if_stage->instruction->opcode == 0x37){ //lui
-
+        //debug
     }
 }
 
