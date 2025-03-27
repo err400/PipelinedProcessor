@@ -56,7 +56,15 @@ bool Processor::resolveUBranch(bool after_stall){
             // jalr
             // to make sure the number is even
             // update the ra value here
-            int32_t op1 = registers.readRegister(id_latch.instruction->rs1);
+            
+            int32_t op1;
+            if(is_forwarded){
+                forward_Dataflow(&if_latch, &id_latch, &ex_latch, &mem_latch, &wb_latch, &registers);
+                op1 = id_latch.rs1_readdata;
+            }
+            else{
+                op1 = registers.readRegister(if_latch.instruction->rs1);
+            }
             registers.writeRegister(id_latch.instruction->rd, id_latch.pc + 4);
             pc = (op1 + id_latch.instruction->imm) & ~1;
             return true;
@@ -81,9 +89,16 @@ bool Processor::resolveUBranch(bool after_stall){
             // jalr
             // to make sure the number is even
             // update the ra value here
-            int32_t op1 = registers.readRegister(if_latch.instruction->rs1);
-            registers.writeRegister(if_latch.instruction->rd, if_latch.pc + 4);
+            int32_t op1;
+            if(is_forwarded){
+                forward_Dataflow(&if_latch, &id_latch, &ex_latch, &mem_latch, &wb_latch, &registers);
+                op1 = id_latch.rs1_readdata;
+            }
+            else{
+                op1 = registers.readRegister(if_latch.instruction->rs1);
+            }
             pc = (op1 + if_latch.instruction->imm) & ~1;
+            registers.writeRegister(if_latch.instruction->rd, if_latch.pc + 4);
             return true;
         }
         ex_latch.is_jump = true; //debug important
