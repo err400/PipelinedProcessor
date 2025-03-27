@@ -305,32 +305,21 @@ void Processor::decode() {
         forward(&if_latch, &id_latch, &ex_latch, &mem_latch, &wb_latch);
     }
     else{
-        if(ex_latch.instruction != nullptr && !ex_latch.is_stall){
-            if(checkDataHazardrs1(if_latch.instruction, ex_latch.instruction)){
+        if(mem_latch.instruction != nullptr && !mem_latch.is_stall){
+            if(checkDataHazardrs1(if_latch.instruction, mem_latch.instruction) || checkDataHazardrs2(if_latch.instruction, mem_latch.instruction)){
                 // propogate the stalls
                 if_latch.is_first_stalled = true;
                 id_latch.is_stall = true;
-                id_latch.num_stall = 2;
-            }
-            else if(checkDataHazardrs2(if_latch.instruction, ex_latch.instruction)){
-                // propogate the stalls
-                if_latch.is_first_stalled = true;
-                id_latch.is_stall = true;
-                id_latch.num_stall = 2;
+                id_latch.num_stall = 1;
             }
         }
-        if(mem_latch.instruction != nullptr && !mem_latch.is_stall){
-            if(checkDataHazardrs1(if_latch.instruction, mem_latch.instruction)){
+        //if both have hazard, then it will pick of ex
+        if(ex_latch.instruction != nullptr && !ex_latch.is_stall){
+            if(checkDataHazardrs1(if_latch.instruction, ex_latch.instruction) || checkDataHazardrs2(if_latch.instruction, ex_latch.instruction)){
                 // propogate the stalls
                 if_latch.is_first_stalled = true;
                 id_latch.is_stall = true;
-                id_latch.num_stall = 1;
-            }
-            else if(checkDataHazardrs2(if_latch.instruction, mem_latch.instruction)){
-                // propogate the stalls
-                if_latch.is_first_stalled = true;
-                id_latch.is_stall = true;
-                id_latch.num_stall = 1;
+                id_latch.num_stall = 2;
             }
         }
         
