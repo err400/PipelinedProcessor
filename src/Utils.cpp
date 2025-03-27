@@ -106,6 +106,7 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
                 if(ex_stage->instruction->controls.MemRead){
                     id_stage->num_stall = 1;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                     return;
                 } //ex gets data from mem stage (lw followed by add)
                 // lw x5 0(x1)
@@ -137,6 +138,7 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
                 if(ex_stage->instruction->controls.MemRead){
                     id_stage->num_stall = 1;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                     return;
                 } //ex gets data from mem stage (lw followed by add)
                 else{
@@ -169,6 +171,7 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
             else if(if_stage->instruction->rs1 == ex_stage->instruction->rd && ex_stage->instruction->controls.MemRead){
                 id_stage->num_stall = 1;
                 if_stage->is_first_stalled = true;
+                id_stage->is_stall = true;
                 return;
             }
         }
@@ -193,16 +196,17 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
             if((if_stage->instruction->rs2 == ex_stage->instruction->rd) && (if_stage->instruction->rs1== ex_stage->instruction->rd) && (ex_stage->instruction->controls.MemRead)){
                 id_stage->num_stall = 2;
                 if_stage->is_first_stalled = true;
-                //no need of data forward, automatically handled by the WB
+                id_stage->is_stall = true;
                 return;
             }
             else if(if_stage->instruction->rs1 == ex_stage->instruction->rd && (ex_stage->instruction->controls.MemRead)){//add and addi type instructions
                 id_stage->num_stall = 1;
                 if_stage->is_first_stalled = true;
+                id_stage->is_stall = true;
                 return;
             }
             else if(if_stage->instruction->rs2 == ex_stage->instruction->rd && (ex_stage->instruction->controls.MemRead)){//add and addi type instructions
-                //debug mem to mem forwarding
+                //continue mem to mem forwarding
                 return;
             }
             // add followed by sw
@@ -243,10 +247,12 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
                 if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
                     id_stage->num_stall = 2;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                 }
                 if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
                     id_stage->num_stall = 2;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                 }
             }
             //add followed by beq
@@ -254,10 +260,12 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
                 if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
                     id_stage->num_stall = 1;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                 }
                 if(if_stage->instruction->rs2 == ex_stage->instruction->rd){
                     id_stage->num_stall = 1;
                     if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
                 }
             }
             return;
@@ -265,11 +273,20 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
         if(mem_stage->instruction != nullptr){
             //add followed by noOp by beq
             if(mem_stage->instruction->controls.RegWrite){
-                //debug
+                //continue
             }
             //lw followed by NoOp by beq
             else if(mem_stage->instruction->controls.MemRead){
-                //debug
+                if(if_stage->instruction->rs1 == mem_stage->instruction->rd){
+                    id_stage->num_stall = 1;
+                    if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
+                }
+                if(if_stage->instruction->rs2 == mem_stage->instruction->rd){
+                    id_stage->num_stall = 1;
+                    if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
+                }
             }
             return;
         }
@@ -277,5 +294,68 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
     }
     else if(if_stage->instruction->opcode == 0x37){ //lui
         //debug
+    }
+}
+
+
+
+void forward_Dataflow(IFStageData* if_latch, IDStageData* id_latch, EXStageData* ex_latch, MEMStageData* mem_latch, WBStageData* wb_latch, Registers* registers){
+    //lw followed by add
+    if(id_latch->instruction->type == Instruction_type::R_TYPE || id_latch->instruction->opcode == 0x13){
+        if(id_latch->instruction->rs1 == mem_latch->instruction->rd){
+            id_latch->rs1_readdata = mem_latch->alu_output;
+        }
+        else if(id_latch->instruction->rs2 == mem_latch->instruction->rd){
+            id_latch->rs2_readdata = mem_latch->alu_output;
+        }
+    }
+    //lw followed by lw
+    else if(id_latch->instruction->opcode == 0x03){
+        if(id_latch->instruction->rs1 == mem_latch->instruction->rd){
+            id_latch->rs1_readdata = mem_latch->mem_read_data;
+        }
+    }
+    //lw followed by sw
+    else if(id_latch->instruction->opcode == 0x23){
+        //lw x4 0(x1)
+        //sw x4 0(x4)
+        if((id_latch->instruction->rs2 == wb_latch->instruction->rd) && (id_latch->instruction->rs1== wb_latch->instruction->rd) && (wb_latch->instruction->controls.MemRead)){
+            id_latch->rs1_readdata = registers->readRegister(if_latch->instruction->rs1);
+            id_latch->rs2_readdata = registers->readRegister(if_latch->instruction->rs2);
+        }
+        //lw x4 0(x1)
+        //sw x2 0(x4)
+        else if(id_latch->instruction->rs1 == mem_latch->instruction->rd && (mem_latch->instruction->controls.MemRead)){//add and addi type instructions
+            id_latch->rs1_readdata = mem_latch->mem_read_data;
+        }
+        //lw x4 0(x1)
+        //sw x4 0(x2)
+        else if(ex_latch->instruction->rs2 == wb_latch->instruction->rd && (wb_latch->instruction->controls.MemRead)){
+            ex_latch->alu_output = wb_latch->write_data;
+        }
+    }
+    else if(id_latch->instruction->opcode == 0x63){ //conditionals
+        //lw followed by beq
+        //lw followed by NoOp by beq
+        //lw x4 0(x2)
+        //beq x4 x0 8
+        if(wb_latch->instruction->controls.MemRead){
+            if(id_latch->instruction->rs1 == wb_latch->instruction->rd){
+                id_latch->rs1_readdata = registers->readRegister(id_latch->instruction->rs1);
+            }
+            if(id_latch->instruction->rs2 == wb_latch->instruction->rd){
+                id_latch->rs2_readdata = registers->readRegister(id_latch->instruction->rs2);
+            }
+        }
+        //add followed by beq
+        //add followed by noOp by beq
+        else if((mem_latch->instruction->type == Instruction_type::R_TYPE || mem_latch->instruction->opcode == 0x13)){
+            if(id_latch->instruction->rs1 == mem_latch->instruction->rd){
+                id_latch->rs1_readdata = mem_latch->alu_output;
+            }
+            if(id_latch->instruction->rs2 == mem_latch->instruction->rd){
+                id_latch->rs2_readdata = mem_latch->alu_output;
+            }
+        }
     }
 }
