@@ -37,18 +37,18 @@ Instruction* getInstruction(int address) {
 void outputStageandCycles(const string& filename, bool is_forwarded) {
     fs::path path_obj(filename);
     string base_filename = path_obj.filename().string(); 
-    string file_dest;
-    if(is_forwarded){
-        file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_forward_out.txt";
-    }
-    else{
-        file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
-    }
-    ofstream outputFile(file_dest);
-    if (!outputFile.is_open()) {
-        cerr << "Error: Unable to open file " << file_dest << endl;
-        exit(1);
-    }
+    // string file_dest;
+    // if(is_forwarded){
+    //     file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_forward_out.txt";
+    // }
+    // else{
+    //     file_dest = "../outputfiles/" + base_filename.substr(0, base_filename.find_last_of('.')) + "_noforward_out.txt";
+    // }
+    ostream& outputFile = cout;
+    // if (!outputFile.is_open()) {
+    //     cerr << "Error: Unable to open file " << file_dest << endl;
+    //     exit(1);
+    // }
     int n = instructionMemory.size();
     for(int i = 0;i<n;i++){
         Instruction instr = instructionMemory[i];
@@ -58,7 +58,7 @@ void outputStageandCycles(const string& filename, bool is_forwarded) {
         }
         outputFile<<endl;
     }
-    outputFile.close();
+    // outputFile.close();
 }
 
 bool checkDataHazardrs1(Instruction* instruction1, Instruction* instruction2) {
@@ -296,31 +296,35 @@ void forward(IFStageData* if_stage, IDStageData* id_stage, EXStageData* ex_stage
         //debug
     }
     else if(if_stage->instruction->opcode == 0x67){ //jalr
-        //add followed by jalr
-        if(if_stage->instruction->type == Instruction_type::R_TYPE || if_stage->instruction->opcode == 0x13){
-            if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
-                id_stage->num_stall = 1;
-                if_stage->is_first_stalled = true;
-                id_stage->is_stall = true;
+        if(ex_stage->instruction != nullptr){
+            //add followed by jalr
+            if(ex_stage->instruction->type == Instruction_type::R_TYPE || ex_stage->instruction->opcode == 0x13){
+                if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
+                    id_stage->num_stall = 1;
+                    if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
+                }
             }
-        }
-        //add noOp followed by jalr
-        //continue
+            //add noOp followed by jalr
+            //continue
 
-        //lw followed by jalr
-        else if(ex_stage->instruction->controls.MemRead){
-            if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
-                id_stage->num_stall = 3;
-                if_stage->is_first_stalled = true;
-                id_stage->is_stall = true;
+            //lw followed by jalr
+            else if(ex_stage->instruction->controls.MemRead){
+                if(if_stage->instruction->rs1 == ex_stage->instruction->rd){
+                    id_stage->num_stall = 3;
+                    if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
+                }
             }
         }
-        //lw noOp jalr
-        else if(mem_stage->instruction->controls.MemRead){
-            if(if_stage->instruction->rs1 == mem_stage->instruction->rd){
-                id_stage->num_stall = 2;
-                if_stage->is_first_stalled = true;
-                id_stage->is_stall = true;
+        if(mem_stage->instruction != nullptr){
+            //lw noOp jalr
+            if(mem_stage->instruction->controls.MemRead){
+                if(if_stage->instruction->rs1 == mem_stage->instruction->rd){
+                    id_stage->num_stall = 2;
+                    if_stage->is_first_stalled = true;
+                    id_stage->is_stall = true;
+                }
             }
         }
 
@@ -391,7 +395,7 @@ void forward_Dataflow(IFStageData* if_latch, IDStageData* id_latch, EXStageData*
     else if(id_latch->instruction->opcode == 0x67){ //jalr
         //add followed by jalr
         //add noOp followed by jalr
-        if(id_latch->instruction->type == Instruction_type::R_TYPE || id_latch->instruction->opcode == 0x13){
+        if(mem_latch->instruction->type == Instruction_type::R_TYPE || mem_latch->instruction->opcode == 0x13){
             if(id_latch->instruction->rs1 == mem_latch->instruction->rd){
                 id_latch->rs1_readdata = mem_latch->alu_output;
             }

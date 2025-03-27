@@ -1,0 +1,2 @@
+addi x5 x4 9        ;  IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+jalr x4 x5 1     ;     ;IF ;ID ;-  ;-  ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
