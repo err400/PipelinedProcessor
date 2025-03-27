@@ -20,8 +20,8 @@ COMMON_OBJS = Basic_Processor.o \
        Utils.o
 
 # Source files specific to each executable
-NOFORWARD_SRCS = $(SRCS) noforward_main.cpp
-FORWARD_SRCS = $(SRCS) forward_main.cpp
+NOFORWARD_SRCS = $(SRCS) noforward.cpp
+FORWARD_SRCS = $(SRCS) forward.cpp
 
 # Object files for each executable
 NOFORWARD_OBJS = $(NOFORWARD_SRCS:.cpp=.o)
@@ -45,7 +45,7 @@ forward: $(FORWARD_OBJS)
 	$(CXX) $(CXXFLAGS) -I$(HEADERS_DIR) -c $< -o $@
 
 clean:
-	rm -f $(COMMON_OBJS) noforward_main.o forward_main.o noforward forward
+	rm -f $(COMMON_OBJS) noforward.o forward.o noforward forward
 
 .PHONY: all clean
 

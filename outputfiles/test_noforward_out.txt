@@ -1,6 +1,6 @@
-slt x5 x9 x18       ;  IF ;ID ;EX ;MEM;WB ;   ;
-beq x6 x0 12        ;     ;IF ;ID ;EX ;MEM;WB ;
-addi x0 x0 0        ;     ;   ;IF ;   ;   ;   ;
-addi x0 x0 0        ;     ;   ;   ;   ;   ;   ;
-addi x0 x0 0        ;     ;   ;   ;IF ;ID ;EX ;
-addi x0 x0 0        ;     ;   ;   ;   ;IF ;ID ;
+slt x5 x9 x18       ;  IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+beq x6 x0 12        ;     ;IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+addi x0 x0 0        ;     ;   ;IF ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+addi x0 x0 0        ;     ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+addi x0 x0 0        ;     ;   ;   ;IF ;ID ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
+addi x0 x0 0        ;     ;   ;   ;   ;IF ;ID ;-  ;-  ;EX ;MEM;WB ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;   ;
