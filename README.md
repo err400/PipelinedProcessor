@@ -48,6 +48,56 @@ the five stages being Instruction Fetch (IF), Instruction Decode(ID), Execute (E
     - Jump instructions: jal and jalr
     - Branch instructions: beq, bne, blt, bge
 
+# Building and Running the Project
+
+## Setup
+1. Clone the repository and navigate to the project directory:
+```bash
+git clone https://github.com/err400/PipelinedProcessor
+cd PipelinedProcessor
+```
+
+## Compilation
+To compile the simulator, navigate to the src directory and use make:
+```bash
+cd src
+make
+```
+This will create two executables:
+- `forward.exe` - Pipelined processor with forwarding
+- `noforward.exe` - Pipelined processor with no forwarding
+
+## Running the Simulator
+
+### For processor with forwarding
+```bash
+.\forward.exe ..\inputfiles\<filename>.txt <cycle_count>
+```
+
+### For processor with no forwarding
+```bash
+.\noforward.exe ..\inputfiles\<filename>.txt <cycle_count>
+```
+
+### Example
+```bash
+.\forward.exe ..\inputfiles\test.txt 100 > ..\outputfiles\test_forward_out.txt
+.\noforward.exe ..\inputfiles\test.txt 100 > ..\outputfiles\test_noforward_out.txt
+```
+
+### Input File Format
+The input files contain RISC-V assembly instructions in hexadecimal format:
+```
+<address>: <instruction_hex> <instruction_assembly>
+```
+
+For example:
+```
+48: ff010113 addi x2 x2 -16
+0: 0124a2b3 slt x5 x9 x18
+4: 00030663 beq x6 x0 12
+```
+
 # Assumptions
 ### Register Initialization:
 - We have assumed that all the 32 registers (stored in a vector) are initialized with the value 0.
