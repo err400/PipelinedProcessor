@@ -170,6 +170,10 @@ void Processor::decode() {
     }
 
     if(id_latch.num_stall > 0){
+        id_latch.rs1_readdata = registers.readRegisters(id_latch.instruction->rs1); //changed after submission
+        if(id_latch.instructions->type == Instruction_type::R_TYPE || id_latch.instruction->type == Instruction_type::S_TYPE || id_latch.instruction->type == Instruction_type::SB_TYPE){
+            id_latch.rs2_readdata = registers.readRegisters(id_latch.instruction->rs2); //changed after submission
+        }
         id_latch.instruction->vec.back() = "-";
         id_latch.num_stall--;
 
